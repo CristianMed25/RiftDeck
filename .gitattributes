@@ -1,0 +1,23 @@
+# Texto con fin de línea normalizado
+* text=auto
+
+# Archivos de Unity en modo texto (Force Text): se pueden comparar en git
+*.cs       text diff=csharp
+*.unity    text merge=unityyamlmerge eol=lf
+*.prefab   text merge=unityyamlmerge eol=lf
+*.asset    text merge=unityyamlmerge eol=lf
+*.meta     text eol=lf
+*.mat      text merge=unityyamlmerge eol=lf
+*.anim     text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+
+# Binarios
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.ttf  binary
+*.otf  binary
+*.wav  binary
+*.ogg  binary
+*.mp3  binary
+*.aseprite binary
