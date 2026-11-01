@@ -48,4 +48,4 @@ Comprar pide un segundo toque. Si te falta oro, te avisa cuánto:
 ## Notas para el equipo
 - Los valores de cartas, enemigos, aumentos y precios son **provisionales** (`CombateFalso` usa datos de prueba) hasta que el integrante 1 defina el combate.
 - El oro se guarda en el teléfono (`Inventario`). La pantalla de resultados puede sumarlo con `Inventario.GanarOro(n)`.
-- El arte de terceros está en `Assets/Art/Terceros/`. Varios packs no permiten redistribuir los archivos sueltos, así que conviene que el repositorio sea privado.
+- El arte de terceros está en `Assets/Art/Terceros/`. Varios packs no permiten redistribuir los archivos sueltos, así que **Claude sugiere hacer privado el repositorio** para no arriesgarnos a un reclamo por copyright.
