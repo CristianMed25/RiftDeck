@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4db31fdbed8a8f140a7fb60cec3fd6ba, type: 3}
+  m_Name: efecto_carmesi
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosCosmetico
+  id: efecto_carmesi
+  nombre: "Destello carmes\xED"
+  categoria: 2
+  precio: 800
+  vista: {fileID: 21300000, guid: 7debc13402c9e52468c48ae1e2abe9fd, type: 3}
+  cuadros:
+  - {fileID: 21300000, guid: 7debc13402c9e52468c48ae1e2abe9fd, type: 3}
+  - {fileID: 21300000, guid: 8e9b2caee8d600b45a2deec574d25c52, type: 3}
+  - {fileID: 21300000, guid: 6586fa24896443a419144e2f42f28a2b, type: 3}
+  - {fileID: 21300000, guid: c615f1c556636ee4c9f096acdee5b876, type: 3}
+  - {fileID: 21300000, guid: ec1b967ee16676c43a1f80f29cf745e1, type: 3}
+  - {fileID: 21300000, guid: 45001208c4fb75a4ea6b2e82dab95046, type: 3}
+  - {fileID: 21300000, guid: 3c588cc4a974bcb429478a2ae7b0fbd7, type: 3}
+  - {fileID: 21300000, guid: 468db00923b273d4386890fb362c0639, type: 3}
+  - {fileID: 21300000, guid: 81e68aed989ecdd40acfea114bd64c4b, type: 3}
+  - {fileID: 21300000, guid: b2642ec7c29a1f749a30e6bfd73a230a, type: 3}
+  - {fileID: 21300000, guid: d0fe569d88bc1524c99da6becac21162, type: 3}
+  - {fileID: 21300000, guid: ac06313a70413334192f5bedbd13ac37, type: 3}
+  - {fileID: 21300000, guid: 770acc3f954e6d44a9857010627b4b63, type: 3}
+  - {fileID: 21300000, guid: 576eb49b3917f87419903f13e5bf540b, type: 3}
+  - {fileID: 21300000, guid: 3e26aceb59815a7458930449b51e8143, type: 3}
+  - {fileID: 21300000, guid: 4346e87f95920a141a17df8202bf4683, type: 3}
+  - {fileID: 21300000, guid: 83c65db3b4cb07049a060d140d1ed599, type: 3}

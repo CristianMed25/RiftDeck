@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac7cba30982b02c45a6536a6d49125b3, type: 3}
+  m_Name: GolemNaranja
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEnemigo
+  nombre: "G\xF3lem de magma"
+  nivel: 1
+  vida: 900
+  escala: 2
+  habilidad: 
+  resistencias:
+  - tipo: cortante
+    multiplicador: 0.5
+  - tipo: elemental
+    multiplicador: 0.5
+  - tipo: perforante
+    multiplicador: 2
+  clips:
+  - nombre: idle
+    cuadros:
+    - {fileID: 21300000, guid: e9d836ae4d7b1a148a6b748e59feb6b8, type: 3}
+    - {fileID: 21300000, guid: da2d712abdefd204ebe64ff9e3063996, type: 3}
+    - {fileID: 21300000, guid: 88af1daffa7f6174ea7517d859a7c6d3, type: 3}
+    - {fileID: 21300000, guid: fc090698d3f1c4f42a890fb5e4dcf92f, type: 3}
+    - {fileID: 21300000, guid: 0c8da461e7b81b445b6f90c570e8d1ed, type: 3}
+    - {fileID: 21300000, guid: fdab1435408b8a645a6dc01ddc58b979, type: 3}
+    - {fileID: 21300000, guid: 36c9c0b46fe30be4185a8eba45823b8a, type: 3}
+    - {fileID: 21300000, guid: 7d256b0c5a9871747883f73f66ac7b67, type: 3}
+    fps: 8
+    volver: 1
+  - nombre: ataque
+    cuadros:
+    - {fileID: 21300000, guid: 03ab06fd75f526c42add508c706d36cc, type: 3}
+    - {fileID: 21300000, guid: 9497740c1ad11fc4eb05d06b8dc2e985, type: 3}
+    - {fileID: 21300000, guid: ac0f1618252954d4f9b8844b362390a1, type: 3}
+    - {fileID: 21300000, guid: 01a734378b3095147993e9bdadb35176, type: 3}
+    - {fileID: 21300000, guid: 16e3415934c87f84097316d1bb1c78c2, type: 3}
+    - {fileID: 21300000, guid: 4224b96135ff99c4795e56490ebcdb6f, type: 3}
+    - {fileID: 21300000, guid: bc326ddb1153cc5438813d1fd3b89a19, type: 3}
+    - {fileID: 21300000, guid: e9f19c7227e4f4f4cb415fc225c6cdb0, type: 3}
+    - {fileID: 21300000, guid: b7394cf860e1e6544b466f28719d84ba, type: 3}
+    - {fileID: 21300000, guid: 36614312473ed8843b9524e6c26afb4e, type: 3}
+    - {fileID: 21300000, guid: 7491bae9abeff444cba0659684b2bae1, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: golpe
+    cuadros:
+    - {fileID: 21300000, guid: fd2bf964eeeeaaf4481b8712c836a6c0, type: 3}
+    - {fileID: 21300000, guid: 295de024f56bc764b8ed9c5937a94ec6, type: 3}
+    - {fileID: 21300000, guid: b7ce8d12b10a7c64a902c49b0400c93f, type: 3}
+    - {fileID: 21300000, guid: f701c9da3bdc06241bce5691f4be00b1, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: muerte
+    cuadros:
+    - {fileID: 21300000, guid: 7488ae36e5bf67b4d809bd21aef8cd43, type: 3}
+    - {fileID: 21300000, guid: d32effcc3a217334bac7f5828067a7d3, type: 3}
+    - {fileID: 21300000, guid: 9c89bbc9a977152478c7f8d3f99928b7, type: 3}
+    - {fileID: 21300000, guid: 2b4c294652b64ae4b8a91f99bd61acc7, type: 3}
+    - {fileID: 21300000, guid: 5372479dac5f1754283f21b8ab138289, type: 3}
+    - {fileID: 21300000, guid: 5732c29eddfbeab4b8e04cf78c239992, type: 3}
+    - {fileID: 21300000, guid: 34507c07d7d0e0649a89534bf079138a, type: 3}
+    - {fileID: 21300000, guid: b033335dbcf8f7249b70d214f5473fef, type: 3}
+    - {fileID: 21300000, guid: d6eb1449c582fcd45aac5a12ce4c2efb, type: 3}
+    - {fileID: 21300000, guid: 81a71d9b7e929b042a587e28f22d103b, type: 3}
+    - {fileID: 21300000, guid: e2ad8b13e91ac4244883eac2a8abeef7, type: 3}
+    - {fileID: 21300000, guid: 16f593d0892c2a34796396f34627f57b, type: 3}
+    - {fileID: 21300000, guid: 33eace91ac9da014896b6688fe29e044, type: 3}
+    fps: 10
+    volver: 0

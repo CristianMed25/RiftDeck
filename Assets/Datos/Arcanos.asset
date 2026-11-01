@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26185afd36a7c934fb175f2aecfe44fa, type: 3}
+  m_Name: Arcanos
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.ArcanosMayores
+  reverso: {fileID: 21300000, guid: be3b783fe237f7742bb715995cbf6516, type: 3}
+  cartas:
+  - nombre: El Loco
+    familia: mana
+    arte: {fileID: 21300000, guid: 5b0e61f4ecdcefe408d6d42a2c146d61, type: 3}
+  - nombre: El Mago
+    familia: elemental
+    arte: {fileID: 21300000, guid: 0920559eea1722347a7d74d7b8808e67, type: 3}
+  - nombre: La Sacerdotisa
+    familia: mana
+    arte: {fileID: 21300000, guid: 8d1f5637c4a511048898ccad258e5816, type: 3}
+  - nombre: La Emperatriz
+    familia: perforante
+    arte: {fileID: 21300000, guid: fbb1fab53eee0094d89c497579fe3389, type: 3}
+  - nombre: El Emperador
+    familia: impacto
+    arte: {fileID: 21300000, guid: 6515c77f694fbb249a49ffed1d6a0e4a, type: 3}
+  - nombre: El Hierofante
+    familia: impacto
+    arte: {fileID: 21300000, guid: ad114da44d687174a99e31d2cd37ad66, type: 3}
+  - nombre: Los Enamorados
+    familia: perforante
+    arte: {fileID: 21300000, guid: 41cbc7533b3183849991f87d4decbe2b, type: 3}
+  - nombre: El Carro
+    familia: impacto
+    arte: {fileID: 21300000, guid: 776cfb8241009144982690d57a9c5b03, type: 3}
+  - nombre: La Justicia
+    familia: cortante
+    arte: {fileID: 21300000, guid: 85219606b20a0474fb25ddfacec03bbc, type: 3}
+  - nombre: "El Ermita\xF1o"
+    familia: mana
+    arte: {fileID: 21300000, guid: 17d521dbcbc8e4041bed566403d65996, type: 3}
+  - nombre: La Rueda
+    familia: mana
+    arte: {fileID: 21300000, guid: 25b1fc6c561235a4ab14498ea0a037a0, type: 3}
+  - nombre: La Fuerza
+    familia: impacto
+    arte: {fileID: 21300000, guid: 0d2c37353956e7049a0937df5946cae2, type: 3}
+  - nombre: El Colgado
+    familia: perforante
+    arte: {fileID: 21300000, guid: e8745b5da3eccb540889b3ed9e59bcac, type: 3}
+  - nombre: La Muerte
+    familia: cortante
+    arte: {fileID: 21300000, guid: 91115d9d83c61cf42907027468709665, type: 3}
+  - nombre: La Templanza
+    familia: mana
+    arte: {fileID: 21300000, guid: f9bbd3b95aa96a2469374011e9a67dd1, type: 3}
+  - nombre: El Diablo
+    familia: elemental
+    arte: {fileID: 21300000, guid: a7a8e56a5363fe34696148421fd4e7b5, type: 3}
+  - nombre: La Torre
+    familia: elemental
+    arte: {fileID: 21300000, guid: 65db8713fedbe384b97ddadb83a66b7f, type: 3}
+  - nombre: La Estrella
+    familia: perforante
+    arte: {fileID: 21300000, guid: 3ac6f0cde43de9447825fb2438f505d0, type: 3}
+  - nombre: La Luna
+    familia: cortante
+    arte: {fileID: 21300000, guid: bd2ecc2fb2ac7ef41971b6f9e06efc37, type: 3}
+  - nombre: El Sol
+    familia: elemental
+    arte: {fileID: 21300000, guid: 330029a287271c64fb3b310fe1da45c4, type: 3}
+  - nombre: El Juicio
+    familia: cortante
+    arte: {fileID: 21300000, guid: 30902a6d8b86db744bc49b0371144ae2, type: 3}
+  - nombre: El Mundo
+    familia: mana
+    arte: {fileID: 21300000, guid: 31791855836961647bf1d4d91a35acf2, type: 3}

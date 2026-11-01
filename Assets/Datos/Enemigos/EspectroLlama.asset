@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac7cba30982b02c45a6536a6d49125b3, type: 3}
+  m_Name: EspectroLlama
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEnemigo
+  nombre: Espectro
+  nivel: 2
+  vida: 1400
+  escala: 1
+  habilidad: 
+  resistencias:
+  - tipo: perforante
+    multiplicador: 0.5
+  - tipo: elemental
+    multiplicador: 0.5
+  - tipo: cortante
+    multiplicador: 2
+  clips:
+  - nombre: idle
+    cuadros:
+    - {fileID: 21300000, guid: 429c62aacc0bd124ba48d521cddb8f74, type: 3}
+    - {fileID: 21300000, guid: fdf155e760c7fe946959d712c4a8824a, type: 3}
+    - {fileID: 21300000, guid: 22c796f9c184d084aaa38d72b3247d91, type: 3}
+    - {fileID: 21300000, guid: eab76e0b2c78a7543b712d4fc91264b0, type: 3}
+    - {fileID: 21300000, guid: d748a8ec77854ad4a8f01fc0a4d48b4d, type: 3}
+    fps: 8
+    volver: 1
+  - nombre: ataque
+    cuadros:
+    - {fileID: 21300000, guid: 2ca83cb12f7bb094caab28f9e3a76de4, type: 3}
+    - {fileID: 21300000, guid: d3d5a795759766f4081175631e40ce5e, type: 3}
+    - {fileID: 21300000, guid: 289c08c70bf41ca4b9f484bffb1fde36, type: 3}
+    - {fileID: 21300000, guid: ad27760e6c185fa4a97e236f3ca5ba5c, type: 3}
+    - {fileID: 21300000, guid: 8be0f5a76cefc41409c1d15e31707154, type: 3}
+    - {fileID: 21300000, guid: 62f1813304d32734d89fbea189c79271, type: 3}
+    - {fileID: 21300000, guid: d15dd8ee35aa40c46a25e5188f784e40, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: golpe
+    cuadros:
+    - {fileID: 21300000, guid: cddf193c9812b0b42a7d90d949eaebac, type: 3}
+    - {fileID: 21300000, guid: 5ef2fd1e2efd3dc4b90976694f787eb9, type: 3}
+    - {fileID: 21300000, guid: c7111624da1c1e645bfc7735d6249bcc, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: muerte
+    cuadros:
+    - {fileID: 21300000, guid: 66f1ab9e58f4b0946b606e4f5f14e5fa, type: 3}
+    - {fileID: 21300000, guid: 1bc99a0a555650243a8b3a34433e31d5, type: 3}
+    - {fileID: 21300000, guid: 397f95af0df023a448620ce4b2f334cb, type: 3}
+    - {fileID: 21300000, guid: d019f9a0cfdc3d04aad15ca95477c5b7, type: 3}
+    - {fileID: 21300000, guid: 7fd895bb48d7eff48b624f4167410d34, type: 3}
+    - {fileID: 21300000, guid: 260244f5e7d591d4683ae021067ad117, type: 3}
+    - {fileID: 21300000, guid: cba7369287cff4840a9a2d51b908b03d, type: 3}
+    - {fileID: 21300000, guid: c5e05cdf313b084439433151efbd8512, type: 3}
+    fps: 10
+    volver: 0

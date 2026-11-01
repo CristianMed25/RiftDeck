@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac7cba30982b02c45a6536a6d49125b3, type: 3}
+  m_Name: MonstruoSangre
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEnemigo
+  nombre: Engendro
+  nivel: 0
+  vida: 500
+  escala: 2
+  habilidad: 
+  resistencias:
+  - tipo: cortante
+    multiplicador: 2
+  - tipo: perforante
+    multiplicador: 0.5
+  clips:
+  - nombre: idle
+    cuadros:
+    - {fileID: 21300000, guid: a1eb1287edb837b498044e2ace447a2c, type: 3}
+    - {fileID: 21300000, guid: 8cc931430905886448d471cf198300f1, type: 3}
+    - {fileID: 21300000, guid: a69ff5254695b9e46b07dd4a4d2f25ed, type: 3}
+    - {fileID: 21300000, guid: 9f0c0a372e6969f4eb1cbb049ca0b5b0, type: 3}
+    - {fileID: 21300000, guid: 1f236fabf94262f448dc0a1cec226662, type: 3}
+    - {fileID: 21300000, guid: f71229cf58218fa48879d57d813d5ddb, type: 3}
+    fps: 8
+    volver: 1
+  - nombre: ataque
+    cuadros:
+    - {fileID: 21300000, guid: 2d5d47eb9f3bfb04db49a9f1d3438779, type: 3}
+    - {fileID: 21300000, guid: 2ad7a5c736d14d5448fab07c1c64e551, type: 3}
+    - {fileID: 21300000, guid: de1ae2b92c16f1444b0807117c574d30, type: 3}
+    - {fileID: 21300000, guid: 8da4aefb8e9ff2447833e1c9efa691a0, type: 3}
+    - {fileID: 21300000, guid: c86283f3f895f0c499c5102a4615dfd8, type: 3}
+    - {fileID: 21300000, guid: 21def1c82db1fb54ea41b8af90b1ab38, type: 3}
+    - {fileID: 21300000, guid: f4e8f439279e18c44a9c645bc57d6708, type: 3}
+    - {fileID: 21300000, guid: 9feaeeaa534be3d479370dd9d890c06b, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: golpe
+    cuadros:
+    - {fileID: 21300000, guid: aa0f022e57c573d4e83d62f8bc5e4c8a, type: 3}
+    - {fileID: 21300000, guid: 364b403cf2511904e82c6111b53af042, type: 3}
+    - {fileID: 21300000, guid: f4197b99693ecdf42a9af535dffae459, type: 3}
+    - {fileID: 21300000, guid: 2ce854e384bacab46b27e16014135d69, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: muerte
+    cuadros:
+    - {fileID: 21300000, guid: 9bedf8cc6c0fd7d4d8a7d7915a24359a, type: 3}
+    - {fileID: 21300000, guid: e4b7bed5d0785c64bbfc09c6ad7a7fd5, type: 3}
+    - {fileID: 21300000, guid: 15aff19f23e99254db5dc139fa29e8a3, type: 3}
+    - {fileID: 21300000, guid: fbe6e3993b448e345a7efc4a5dd018d6, type: 3}
+    fps: 10
+    volver: 0

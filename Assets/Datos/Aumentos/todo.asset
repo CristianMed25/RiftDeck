@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e937b87edab35974abb208d8384c922c, type: 3}
+  m_Name: todo
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosAumento
+  id: todo
+  nombre: Todo o nada
+  descripcion: "Jugadas de 3 o m\xE1s cartas: x1.6. Con menos: x0.75."
+  calidad: 2
+  icono: {fileID: 21300000, guid: 81b185e104342984c8d054b25573cda4, type: 3}
+  silueta: {fileID: 0}
+  aura: {fileID: 21300000, guid: c6298499a90b8374b96a3c5e1c250c7d, type: 3}

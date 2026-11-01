@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4db31fdbed8a8f140a7fb60cec3fd6ba, type: 3}
+  m_Name: efecto_esmeralda
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosCosmetico
+  id: efecto_esmeralda
+  nombre: Destello esmeralda
+  categoria: 2
+  precio: 450
+  vista: {fileID: 21300000, guid: 94b1be57befa17d47895bf465941873c, type: 3}
+  cuadros:
+  - {fileID: 21300000, guid: 94b1be57befa17d47895bf465941873c, type: 3}
+  - {fileID: 21300000, guid: 4e325f9c308b90f40b5224e304c2254e, type: 3}
+  - {fileID: 21300000, guid: 28aa348e026e970478f05c215cee5156, type: 3}
+  - {fileID: 21300000, guid: 636483a8251b31849874ca51f91ac574, type: 3}
+  - {fileID: 21300000, guid: ce52e4e8f141a804fb7d761f00ce1cd7, type: 3}
+  - {fileID: 21300000, guid: d656375427a6f1e4aad072450db4be57, type: 3}
+  - {fileID: 21300000, guid: fecbda354784a644fa4b613da6b43aad, type: 3}
+  - {fileID: 21300000, guid: 3b7b33405cd99f24984a55141f7695d9, type: 3}
+  - {fileID: 21300000, guid: 05ada36155ad94b44a1bc1020c88cd5e, type: 3}
+  - {fileID: 21300000, guid: 52e2acc9d1caed543bd7f9512e69d004, type: 3}
+  - {fileID: 21300000, guid: 652b6363782d3a94fa904467c7e55f9a, type: 3}
+  - {fileID: 21300000, guid: 46a79147def0f534bb380acc4784c2f5, type: 3}
+  - {fileID: 21300000, guid: 93a725b72395a2247b8ae6f9bf68fab8, type: 3}
+  - {fileID: 21300000, guid: 6bb8f055dd5f8b548a3eb54758156013, type: 3}
+  - {fileID: 21300000, guid: 1c075079a7480c94ebfb18fec2721d69, type: 3}
+  - {fileID: 21300000, guid: 81dfe2c621ecd054aa0fbee254b4c12c, type: 3}
+  - {fileID: 21300000, guid: 83e6b939644450948ac5eb99d74e6378, type: 3}
+  - {fileID: 21300000, guid: dbdd2e09726f2e2458ece065e9e1d964, type: 3}

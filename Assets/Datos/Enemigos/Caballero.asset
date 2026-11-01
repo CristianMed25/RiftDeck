@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac7cba30982b02c45a6536a6d49125b3, type: 3}
+  m_Name: Caballero
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEnemigo
+  nombre: Caballero
+  nivel: 2
+  vida: 1500
+  escala: 2
+  habilidad: bloqueo
+  resistencias:
+  - tipo: cortante
+    multiplicador: 0.5
+  - tipo: impacto
+    multiplicador: 2
+  clips:
+  - nombre: idle
+    cuadros:
+    - {fileID: 21300000, guid: d6211dc3a41d4a1468c3669a8bbee753, type: 3}
+    - {fileID: 21300000, guid: 438fffafc5cb8714392d46c967f18474, type: 3}
+    - {fileID: 21300000, guid: 0fa3ff0d5c36bd34798b1ad419da2e7d, type: 3}
+    - {fileID: 21300000, guid: 4f441ed9ade16544f9b82c56a5ea0ccb, type: 3}
+    - {fileID: 21300000, guid: cfa43f48e4024ae4987ebd57f97350c6, type: 3}
+    - {fileID: 21300000, guid: ecfe804aa34fbcc45bd9bad778406c0c, type: 3}
+    - {fileID: 21300000, guid: b400a76ba6ec07043aca4a5304dab9a5, type: 3}
+    - {fileID: 21300000, guid: 2e57f51fe681b0a4986bdaa077850889, type: 3}
+    - {fileID: 21300000, guid: 1a72b98509069d8409050a89129eb27d, type: 3}
+    - {fileID: 21300000, guid: b7614af3c01db2542a234d0deffaab8a, type: 3}
+    - {fileID: 21300000, guid: c1c1fa365448eae4ca4691ea2acf529d, type: 3}
+    - {fileID: 21300000, guid: a28802fc9999e68488b7bd648dc17e95, type: 3}
+    - {fileID: 21300000, guid: 226e9d9b350bcdb4187d034d63f2ee22, type: 3}
+    - {fileID: 21300000, guid: 52fd2ea7b3726ef4b8f2d216a7049227, type: 3}
+    fps: 10
+    volver: 1
+  - nombre: ataque
+    cuadros:
+    - {fileID: 21300000, guid: 94c4b4818ed0a934bb5eb1c421959b5e, type: 3}
+    - {fileID: 21300000, guid: 71a4cc95836a0bb4f87e179f1082af17, type: 3}
+    - {fileID: 21300000, guid: 4289845b0d7ea18438b8bbad6646900c, type: 3}
+    - {fileID: 21300000, guid: 54c975c5394341f4eaeeded3d0ac85d7, type: 3}
+    - {fileID: 21300000, guid: ec78177622b356e4dacbd4f546cd4528, type: 3}
+    - {fileID: 21300000, guid: 41a8e4d5745599f4da61c9444ca85ceb, type: 3}
+    - {fileID: 21300000, guid: 7fd10cc382268e94ea267a71090d1b3e, type: 3}
+    - {fileID: 21300000, guid: 34c88fa9269c19349ad40d1dd914edaa, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: bloqueo
+    cuadros:
+    - {fileID: 21300000, guid: 0c231c883652f4045a31549bc90a262b, type: 3}
+    - {fileID: 21300000, guid: e50f8ee94e3f0a843b8537d4a5e3f344, type: 3}
+    - {fileID: 21300000, guid: dc911747e62bfd147b60247db0067131, type: 3}
+    - {fileID: 21300000, guid: 26fa68669f74f184fbce7ad17c2d28f8, type: 3}
+    - {fileID: 21300000, guid: 98bbb0ca73bb556438d2e5f6f6e0f84e, type: 3}
+    - {fileID: 21300000, guid: 447785f931d2880449e437697c2a7b85, type: 3}
+    fps: 10
+    volver: 1
+  - nombre: golpe
+    cuadros:
+    - {fileID: 21300000, guid: 4cb159d5d7589b5438832e9ab8c2137c, type: 3}
+    - {fileID: 21300000, guid: 002af4246313a464094ab681004b4b96, type: 3}
+    - {fileID: 21300000, guid: 38809f4e5ef0990458a1073187e80ea5, type: 3}
+    - {fileID: 21300000, guid: 242137208077cfb43bdf4c96cd69b4d4, type: 3}
+    - {fileID: 21300000, guid: 78db477feefcc4f4c821749502d6f3ff, type: 3}
+    - {fileID: 21300000, guid: 98c74757c4993174988328cc35907430, type: 3}
+    - {fileID: 21300000, guid: 97340c08ff86bd5468de4f849cf8259b, type: 3}
+    - {fileID: 21300000, guid: 2c6abc45460f1694ab623dd5875b7052, type: 3}
+    fps: 12
+    volver: 1
+  - nombre: muerte
+    cuadros:
+    - {fileID: 21300000, guid: 626fc79d75002fd4eace9dc95d4e471f, type: 3}
+    - {fileID: 21300000, guid: 653dd1d1a6df4fa44924351c9a6c660b, type: 3}
+    - {fileID: 21300000, guid: c4629af7d600d4f4a946fbb659119208, type: 3}
+    - {fileID: 21300000, guid: 0b57cf58a98b7934d90a0440e00089be, type: 3}
+    - {fileID: 21300000, guid: a196699eebd95c04eac8cfcf7d2918d5, type: 3}
+    - {fileID: 21300000, guid: 357e534bb69010b49b537492223c9fd0, type: 3}
+    - {fileID: 21300000, guid: 0de35b78508204e4da4cfa8344af030a, type: 3}
+    - {fileID: 21300000, guid: 2f863c96bfa0eb04a94040623398593b, type: 3}
+    - {fileID: 21300000, guid: 749511c67185eb14aa74f7f2de1b8c03, type: 3}
+    - {fileID: 21300000, guid: 9fdd8f0d0f1d9114e962e1ba7708a433, type: 3}
+    - {fileID: 21300000, guid: 1964c8d3c72e41d4e91f38d80a8b2cc1, type: 3}
+    - {fileID: 21300000, guid: 0c7651077b9eb3047a656a89eb025dd0, type: 3}
+    - {fileID: 21300000, guid: f7a005a7db346144fb62cd61958a2b55, type: 3}
+    - {fileID: 21300000, guid: f1a8718f6750bda47b824f2cf3972d73, type: 3}
+    - {fileID: 21300000, guid: 0dda48ad7a9ddbd418ed13d0b1404bb7, type: 3}
+    fps: 10
+    volver: 0

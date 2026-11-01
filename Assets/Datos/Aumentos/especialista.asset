@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e937b87edab35974abb208d8384c922c, type: 3}
+  m_Name: especialista
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosAumento
+  id: especialista
+  nombre: Especialista
+  descripcion: "+30% de da\xF1o con el tipo al que el enemigo es d\xE9bil."
+  calidad: 1
+  icono: {fileID: 21300000, guid: 4d685cc148df8354fbb7392d607302c5, type: 3}

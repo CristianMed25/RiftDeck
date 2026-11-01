@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10adeb2d49c90dd43b4bf4cf3dd967aa, type: 3}
+  m_Name: TiposDano
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.TiposDano
+  tipos:
+  - id: cortante
+    nombre: Cortante
+    color: {r: 0.29803923, g: 0.5254902, b: 0.9490196, a: 1}
+    icono: {fileID: 21300000, guid: 5b0d6e6a25bea4148acb9bd0ddea6750, type: 3}
+  - id: perforante
+    nombre: Perforante
+    color: {r: 0.30980393, g: 0.8901961, b: 0.75686276, a: 1}
+    icono: {fileID: 21300000, guid: 4d685cc148df8354fbb7392d607302c5, type: 3}
+  - id: impacto
+    nombre: Impacto
+    color: {r: 1, g: 0.78431374, b: 0.23921569, a: 1}
+    icono: {fileID: 21300000, guid: 703d3ce3b11d66b4b945e545276c98e2, type: 3}
+  - id: elemental
+    nombre: Elemental
+    color: {r: 0.9098039, g: 0.25490198, b: 0.24313726, a: 1}
+    icono: {fileID: 21300000, guid: 008c3baa25a782c4c81e9a32aa191c86, type: 3}
