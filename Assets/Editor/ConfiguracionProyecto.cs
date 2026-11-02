@@ -37,7 +37,7 @@ namespace RiftDeck.EditorTools
             QualitySettings.SetQualityLevel(nivelActual, false);
 
             AssetDatabase.SaveAssets();
-            Debug.Log("RiftDeck: proyecto configurado (horizontal, Force Text, sin AA).");
+            UnityEngine.Debug.Log("RiftDeck: proyecto configurado (horizontal, Force Text, sin AA).");
         }
 
         public static void ConfigurarYSalir()
