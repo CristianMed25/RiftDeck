@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using RiftDeck.Combate;
 
 namespace RiftDeck.UI
 {
@@ -37,6 +38,7 @@ namespace RiftDeck.UI
         [SerializeField] UnityEngine.UI.Image marco;
 
         public DatosCarta Datos { get; private set; }
+        public CartaSO Carta { get; private set; }
         public ManoCartas Mano { get; set; }
         public RectTransform Visual => visual;
         public RectTransform Raiz => (RectTransform)transform;
@@ -55,6 +57,7 @@ namespace RiftDeck.UI
             Material materialMarco = null, bool conCosto = false, bool conDano = false)
         {
             Datos = datos;
+            Carta = null;
             MostrarArte(arteCompleto, conCosto, conDano);
             MostrarMarco(arteCompleto != null ? marcoEspecial : null, materialMarco);
             costo.text = datos.costo.ToString();
@@ -72,6 +75,15 @@ namespace RiftDeck.UI
             desplazamiento = new Vector2(0, -40);
             SetEnZona(false);
             SetJugable(true);
+        }
+
+        /// <summary>Asocia el dato de combate conservando el formato visual existente.</summary>
+        public void BindCarta(CartaSO carta, TiposDano tipos)
+        {
+            if (carta == null) throw new System.ArgumentNullException(nameof(carta));
+            Bind(new DatosCarta(carta.nombreCarta, 0, carta.valorBase, carta.tipoDano.ToString()),
+                tipos, carta.spriteIlustracion, null, null, false, false);
+            Carta = carta;
         }
 
         /// <summary>

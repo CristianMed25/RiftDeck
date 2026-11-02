@@ -19,6 +19,7 @@ namespace RiftDeck.Partida
 
         /// <summary>True mientras la corrutina de cambio de turno está en curso.</summary>
         public bool EnCambioDeTurno => cambiandoTurno;
+        public GestorPartida Partida => partida;
 
         /// <summary>
         /// Asigna el <see cref="GestorPartida"/> de la partida en curso. Lo llama quien

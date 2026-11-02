@@ -1,5 +1,48 @@
 # RiftDeck
 
+## Sistema de combate
+
+La rama `CombatSistem` incorpora el combate sobre los contratos existentes:
+
+- `RiftDeck.Partida.GestorPartida` mantiene los dos jugadores locales, la ronda y
+  los puntos. `ControladorTurnos` sigue siendo el responsable de cubrir la
+  pantalla, alternar el jugador activo y ejecutar el callback posterior al
+  cambio.
+- La UI existente usa `RiftDeck.UI.CardView` y `ManoCartas`, no `CartaUI`.
+  `ManoCartas.PidioElegir` es el evento de selección. `CardView.BindCarta`
+  conserva el render actual y expone la `CartaSO` seleccionada. `CartaUI` es
+  un adaptador opcional para prefabs nuevos.
+- `ControladorCombate` escucha esa selección, llama a `CombatEngine`, suma el
+  resultado al `GestorPartida`, actualiza `JugadorModel`, mueve la carta a la
+  zona de jugada y solicita el cambio de turno. El evento
+  `puntuacionActualizada` permite conectar el HUD; `uiRefrescada` se ejecuta
+  después de cambiar el turno.
+
+El cálculo no depende de `MonoBehaviour` ni de la UI:
+
+```text
+Puntos = redondeo(valorBase * multiplicadorDeResistencia)
+```
+
+### Prueba rápida en Unity
+
+1. En `Assets/ScriptableObjects/`, crea una carta con
+   **Create > RiftDeck > Combate > Carta**. Configura `id`, `nombreCarta`,
+   `valorBase`, `tipoDano` y su ilustración.
+2. Crea un asset **Create > RiftDeck > Combate > Resistencias**. El arreglo
+   serializado sigue el orden `Cortante`, `Perforante`, `Impacto`,
+   `Elemental`; usa, por ejemplo, `2`, `1` y `0.5` para debilidad, neutral y
+   resistencia.
+3. En la escena Combate, conserva `InicializadorPartida` y
+   `ControladorTurnos` de `feature/game-flow`. Añade `ControladorCombate`,
+   asigna `ManoCartas`, `ControladorTurnos` y el asset de resistencias.
+4. En cada `CardView`, usa `CartaUI` para asignar el `CartaSO` y `TiposDano`,
+   o llama `BindCarta` desde el código que reparte la mano.
+5. Conecta `puntuacionActualizada` al HUD y `uiRefrescada` al método que
+   redibuja la mano/puntuación. Inicia la escena, selecciona una carta y
+   confirma que se muestra el pase de dispositivo, cambia el jugador y se
+   refleja el puntaje en la ronda actual.
+
 Roguelike táctico de cartas para 2 jugadores en el mismo teléfono. Unity **6000.6.7f1**, Android, solo horizontal, pixel art a 640×360 (escala ×3).
 
 Abrir el proyecto con esa versión exacta de Unity. Las escenas están en `Assets/Scenes/` y se juega desde **Menu**.
