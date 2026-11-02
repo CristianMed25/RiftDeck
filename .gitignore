@@ -50,3 +50,6 @@ desktop.ini
 # Soluciones generadas por Unity
 *.slnx
 
+# Configuración Claude
+.claude/
+
