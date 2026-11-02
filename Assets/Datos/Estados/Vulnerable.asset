@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEstado
   nombre: Vulnerable
   descripcion: "El hielo lo deja fr\xE1gil: recibe +25 % de da\xF1o (x1.25)."
+  resumen: "recibe +25 % de da\xF1o"
   icono: {fileID: 21300000, guid: 32915e1c9e953a64cafecbef778bbe6c, type: 3}
   esBuff: 0
   turnos: 2
   danoRecibido: 1.25
   anulaDano: 0
+  danoPorTurno: 0
+  enCartas: 0
+  costoExtra: 0

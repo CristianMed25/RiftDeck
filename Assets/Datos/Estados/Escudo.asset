@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEstado
   nombre: Escudo
   descripcion: "Anula todo el da\xF1o de este turno."
+  resumen: "anula todo el da\xF1o"
   icono: {fileID: 21300000, guid: 1e89f55e5d180e148bc0860626867202, type: 3}
   esBuff: 1
   turnos: 1
   danoRecibido: 1
   anulaDano: 1
+  danoPorTurno: 0
+  enCartas: 0
+  costoExtra: 0

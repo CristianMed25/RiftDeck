@@ -15,7 +15,11 @@ namespace RiftDeck.UI
     ///   suma esos puntos al jugador.
     /// - El enemigo con la habilidad "bloqueo" puede anular el daño de todo el turno siguiente
     ///   (estado Escudo). Los buffs y debuffs del enemigo cambian el daño que recibe.
-    /// - El enemigo que se levanta (el Caballero) se cura la primera vez que llega a 0 y gana
+    /// - El costo que se paga es el de la carta con sus estados (CardView.Costo). La primera vez
+    ///   que el Caballero baja a la mitad de su vida lanza Penitencia: todas las cartas de la mano
+    ///   de ese momento cuestan +1 hasta el final del combate (vuelven cada turno marcadas).
+    /// - Los hechizos de fuego dejan Quemadura (pierde 5 % de su vida al pasar cada turno).
+    /// - El enemigo que se levanta (el Caballero) se cura toda la vida la primera vez que llega a 0 y gana
     ///   su buff hasta el final del combate; la segunda vez sí muere.
     /// - Aumentos (estilo TFT): 3 por partida, uno en cada una de las rondas 1 a 3, al llegar
     ///   un enemigo elegido al azar. Uno es de plata, otro de oro (en orden al azar) y el
@@ -62,6 +66,12 @@ namespace RiftDeck.UI
             /// <summary>Todo o nada: cuántas veces jugó toda la mano o pasó sin jugar.</summary>
             public int todoNada;
             public bool jugoEsteTurno;
+            /// <summary>
+            /// Penitencia: cartas normales marcadas, que vuelven a la mano cada turno, y claves de las
+            /// especiales marcadas ("hechizo:4"). Se borran al jugarlas o al cambiar de enemigo.
+            /// </summary>
+            public readonly List<DatosCarta> marcadas = new List<DatosCarta>();
+            public readonly HashSet<string> especialesMarcadas = new HashSet<string>();
 
             public bool Tiene(string id) => aumentos.Exists(a => a.id == id);
         }
@@ -113,6 +123,8 @@ namespace RiftDeck.UI
         [SerializeField] DatosEstado estadoEscudo;
         [Tooltip("Lo pone un hechizo de hielo")]
         [SerializeField] DatosEstado estadoVulnerable;
+        [Tooltip("Lo pone un hechizo de fuego")]
+        [SerializeField] DatosEstado estadoQuemadura;
 
         static readonly Dictionary<string, string[]> Nombres = new Dictionary<string, string[]>
         {
@@ -135,6 +147,8 @@ namespace RiftDeck.UI
         int vidaEnemigo;
         readonly List<EstadoActivo> estados = new List<EstadoActivo>();
         bool seLevanto;
+        // el estado de cartas (Penitencia) sale una sola vez, al bajar por primera vez del umbral
+        bool tocoUmbral, estadoCartasLanzado;
         bool ocupado;
         // en qué enemigo de cada ronda (0 a 2) sale la oferta, y de qué calidad es
         readonly int[] enemigoDeOferta = new int[OfertasTotales];
@@ -199,7 +213,14 @@ namespace RiftDeck.UI
             viejas.AddRange(manoCartas.CartasEnZona());
             foreach (var c in viejas) { c.transform.SetParent(null); Destroy(c.gameObject); }
             var j = Actual;
-            int cantidad = CartasPorMano + (j.Tiene("mano") ? 1 : 0);
+            // las marcadas por Penitencia vuelven primero y ocupan su lugar en la mano
+            foreach (var d in j.marcadas)
+            {
+                var c = CrearCarta(d);
+                c.PonerEstado(actual.estadoCartas);
+                manoCartas.Agregar(c);
+            }
+            int cantidad = Mathf.Max(0, CartasPorMano + (j.Tiene("mano") ? 1 : 0) - j.marcadas.Count);
             for (int i = 0; i < cantidad; i++)
             {
                 // las armas de RAAWRMERICA están escondidas en el mazo: salen con su probabilidad
@@ -211,6 +232,23 @@ namespace RiftDeck.UI
                 else manoCartas.Agregar(NuevaCarta());
             }
             AgregarPersistentes(j);
+            foreach (var c in manoCartas.CartasEnMano())
+                if (!EsNormal(c.Datos) && j.especialesMarcadas.Contains(Clave(c.Datos))) c.PonerEstado(actual.estadoCartas);
+        }
+
+        static string Clave(DatosCarta d) => d.especial + ":" + d.indice;
+
+        /// <summary>Normales y de póker se reparten de nuevo; las especiales vuelven solas a la mano.</summary>
+        static bool EsNormal(DatosCarta d) => string.IsNullOrEmpty(d.especial) || d.Es(DatosCarta.Poker);
+
+        /// <summary>Vuelve a armar una carta normal o de póker a partir de sus datos.</summary>
+        CardView CrearCarta(DatosCarta d)
+        {
+            var carta = Instantiate(prefabCarta);
+            if (d.EsComodin) carta.Bind(d, tipos, especiales.contenidoComodin, especiales.marcoComodin, prismatico, true);
+            else if (d.Es(DatosCarta.Poker)) carta.Bind(d, tipos, especiales.Poker(d.indice, d.palo), null, null, true);
+            else carta.Bind(d, tipos);
+            return carta;
         }
 
         CardView NuevaCarta()
@@ -272,6 +310,8 @@ namespace RiftDeck.UI
         string Describir(CardView carta)
         {
             var d = carta.Datos;
+            // el texto dice lo que cuesta ahora, con Penitencia y compañía
+            d.costo = carta.Costo;
             if (!string.IsNullOrEmpty(d.especial)) return DescribirEspecial(d);
             if (d.EsArcano)
             {
@@ -295,7 +335,7 @@ namespace RiftDeck.UI
         int CostoElegido()
         {
             int total = 0;
-            foreach (var c in manoCartas.CartasEnZona()) total += c.Datos.costo;
+            foreach (var c in manoCartas.CartasEnZona()) total += c.Costo;
             return total;
         }
 
@@ -304,7 +344,7 @@ namespace RiftDeck.UI
             int disponible = Actual.mana + Actual.reserva - CostoElegido();
             if (carta.Datos.EsArcano && ArcanosEnZona() >= 3) StartCoroutine(AvisarPista("Máximo 3 arcanos"));
             else if (carta.Datos.Es(DatosCarta.Poker) && EnZona(DatosCarta.Poker).Count >= 5) StartCoroutine(AvisarPista("Una mano de póker es de 5"));
-            else if (carta.Datos.costo <= disponible) manoCartas.MoverAZona(carta);
+            else if (carta.Costo <= disponible) manoCartas.MoverAZona(carta);
             else StartCoroutine(AvisarPista("No te alcanza el maná"));
             Refrescar();
         }
@@ -353,7 +393,7 @@ namespace RiftDeck.UI
             for (int i = 0; i < casillasEnemigo.Length; i++)
                 casillasEnemigo[i].color = i < indiceEnemigo ? PaletaUI.Menta : i == indiceEnemigo ? PaletaUI.Oro : PaletaUI.Hueco;
 
-            foreach (var c in manoCartas.CartasEnMano()) c.SetJugable(c.Datos.costo <= disponible - costo);
+            foreach (var c in manoCartas.CartasEnMano()) c.SetJugable(c.Costo <= disponible - costo);
             foreach (var c in manoCartas.CartasEnZona()) c.SetJugable(true);
 
             bool zonaVacia = manoCartas.CartasEnZona().Count == 0;
@@ -415,9 +455,16 @@ namespace RiftDeck.UI
             if (critico) total *= 2;
             int dano = Mathf.RoundToInt(total);
 
-            bool hielo = normales.Exists(c => c.Datos.Es(DatosCarta.Hechizo)
-                && System.Array.IndexOf(CartasEspeciales.Hechizos[c.Datos.indice - 1].elementos, "hielo") >= 0);
+            bool hielo = TieneElemento(normales, "hielo");
+            bool fuego = TieneElemento(normales, "fuego");
             foreach (var a in jugados) j.arcanos.Remove(a.arcano - 1);
+            // jugarla le quita la Penitencia: ya no vuelve marcada
+            foreach (var c in jugada)
+            {
+                if (c.Estados.Count == 0) continue;
+                if (EsNormal(c.Datos)) j.marcadas.Remove(c.Datos);
+                else j.especialesMarcadas.Remove(Clave(c.Datos));
+            }
             foreach (var c in jugada) { c.transform.SetParent(null); Destroy(c.gameObject); }
             bool nuevoArsenal = SacarJugadas(j, normales.ConvertAll(c => c.Datos));
             j.jugoEsteTurno = true;
@@ -438,9 +485,11 @@ namespace RiftDeck.UI
                     j.porRonda[ronda - 1] += dano;
                     RegistrarEstilo(normales.ConvertAll(c => c.Datos), dano);
                     vidaEnemigo -= dano;
+                    if (vidaEnemigo <= actual.vida * actual.umbralEstadoCartas) tocoUmbral = true;
                     Refrescar();
                     yield return Golpear(dano, critico ? PaletaUI.Oro : PaletaUI.DeJugador(activo));
                     if (hielo && vidaEnemigo > 0 && estadoVulnerable != null) yield return AplicarEstado(estadoVulnerable);
+                    if (fuego && vidaEnemigo > 0 && estadoQuemadura != null) yield return AplicarEstado(estadoQuemadura);
                 }
             }
             Refrescar();
@@ -451,6 +500,7 @@ namespace RiftDeck.UI
             if (todo) yield return Aviso("Todo o nada · jugaste toda la mano", $"¡TODO! x{MultiplicadorTodoNada(j):0.0}", PaletaUI.Oro, null, 16);
 
             if (vidaEnemigo <= 0 && actual.levantarse && !seLevanto) yield return Levantarse();
+            yield return RevisarEstadoCartas();
             if (vidaEnemigo <= 0)
             {
                 yield return enemigo.Morir();
@@ -473,6 +523,11 @@ namespace RiftDeck.UI
             vidaEnemigo = actual.vida;
             estados.Clear();
             seLevanto = false;
+            tocoUmbral = estadoCartasLanzado = false;
+            // la Penitencia dura hasta el final del combate con el que la lanzó
+            foreach (var j in jugadores) { j.marcadas.Clear(); j.especialesMarcadas.Clear(); }
+            foreach (var c in manoCartas.CartasEnMano()) c.QuitarEstados();
+            foreach (var c in manoCartas.CartasEnZona()) c.QuitarEstados();
             enemigo.MostrarEstados(estados);
             foreach (var j in jugadores) j.danoEnemigo = 0;
             enemigo.Mostrar(actual, tipos);
@@ -517,7 +572,11 @@ namespace RiftDeck.UI
 
         // ---------- Buffs y debuffs del enemigo ----------
 
-        /// <summary>Pone el estado (o le renueva los turnos), con sus flechas.</summary>
+        static bool TieneElemento(List<CardView> cartas, string elemento) =>
+            cartas.Exists(c => c.Datos.Es(DatosCarta.Hechizo)
+                && System.Array.IndexOf(CartasEspeciales.Hechizos[c.Datos.indice - 1].elementos, elemento) >= 0);
+
+        /// <summary>Pone el estado (o le renueva los turnos), con su nombre y sus flechas.</summary>
         IEnumerator AplicarEstado(DatosEstado d)
         {
             var e = estados.Find(x => x.datos == d);
@@ -528,14 +587,68 @@ namespace RiftDeck.UI
             }
             e.turnos = d.turnos;
             enemigo.MostrarEstados(estados, e);
+            enemigo.Anunciar(d);
             yield return enemigo.Flechas(d.esBuff);
         }
 
-        void PasarTurnoEstados()
+        /// <summary>Pasa un turno: la Quemadura quema y los estados con turnos se gastan.</summary>
+        IEnumerator PasarTurnoEstados()
         {
+            foreach (var e in estados)
+            {
+                if (e.datos.danoPorTurno <= 0 || vidaEnemigo <= 1) continue;
+                // quema pero no mata: el golpe final lo da un jugador
+                int dano = Mathf.Min(vidaEnemigo - 1, Mathf.RoundToInt(actual.vida * e.datos.danoPorTurno));
+                vidaEnemigo -= dano;
+                if (vidaEnemigo <= actual.vida * actual.umbralEstadoCartas) tocoUmbral = true;
+                enemigo.Impacto(dano, PaletaUI.Rojo, new Vector2(0, 0.3f), EnemyPanel.Efecto.Fuego);
+                Refrescar();
+                yield return new WaitForSeconds(0.5f);
+            }
             foreach (var e in estados) if (e.turnos > 0) e.turnos--;
             estados.RemoveAll(e => e.datos.turnos > 0 && e.turnos <= 0);
             enemigo.MostrarEstados(estados);
+        }
+
+        /// <summary>
+        /// La primera vez que la vida del enemigo baja del umbral (la mitad), lanza su estado
+        /// de cartas. Se revisa después de cada jugada y al empezar cada turno (por la Quemadura).
+        /// </summary>
+        IEnumerator RevisarEstadoCartas()
+        {
+            if (estadoCartasLanzado || !tocoUmbral || actual.estadoCartas == null || vidaEnemigo <= 0) yield break;
+            estadoCartasLanzado = true;
+            yield return EstadoEnCartas(actual.estadoCartas);
+        }
+
+        /// <summary>
+        /// El enemigo lanza un estado a todas las cartas de la mano (Penitencia): ataca, grita
+        /// el nombre en rojo y el efecto cae en cada carta, una tras otra. Esas cartas quedan
+        /// marcadas hasta el final del combate; las que lleguen después a la mano no lo tienen.
+        /// </summary>
+        IEnumerator EstadoEnCartas(DatosEstado d)
+        {
+            // que termine de repartir
+            yield return new WaitForSeconds(0.4f);
+            var candidatas = manoCartas.CartasEnMano().FindAll(c => !c.Datos.EsArcano);
+            if (candidatas.Count == 0) yield break;
+            var j = Actual;
+            foreach (var c in candidatas)
+            {
+                if (EsNormal(c.Datos)) j.marcadas.Add(c.Datos);
+                else j.especialesMarcadas.Add(Clave(c.Datos));
+            }
+
+            yield return enemigo.Lanzar(d);
+            foreach (var c in candidatas)
+            {
+                StartCoroutine(c.RecibirEstado(d, enemigo.EfectoDebuff));
+                yield return new WaitForSeconds(0.15f);
+            }
+            yield return new WaitForSeconds(0.6f);
+            string cartas = candidatas.Count == 1 ? "1 carta" : $"{candidatas.Count} cartas";
+            StartCoroutine(AvisarPista($"{d.nombre}: {cartas} {d.resumen}", d.Color));
+            Refrescar();
         }
 
         /// <summary>
@@ -566,7 +679,7 @@ namespace RiftDeck.UI
             Refrescar();
 
             // pasa un turno para los buffs y debuffs; después actúa el enemigo
-            PasarTurnoEstados();
+            yield return PasarTurnoEstados();
             bool bloquea = actual.habilidad == "bloqueo" && Random.value < ProbabilidadBloqueo;
             enemigo.Actuar(bloquea ? "bloqueo" : "ataque");
             enemigo.MostrarEscudo(bloquea);
@@ -602,6 +715,8 @@ namespace RiftDeck.UI
             });
             if (robado > 0)
                 yield return Aviso("Hechizo prohibido", CartasEspeciales.Hechizos[robado - 1].nombre.ToUpperInvariant(), PaletaUI.VioletaReserva, null);
+            // si la Quemadura lo bajó del umbral al pasar el turno, la Penitencia cae en la mano nueva
+            yield return RevisarEstadoCartas();
             yield return OfrecerPendientes();
             ocupado = false;
             Refrescar();

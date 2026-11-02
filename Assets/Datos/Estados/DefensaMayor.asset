@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosEstado
   nombre: Defensa mayor
   descripcion: "Recibe la mitad del da\xF1o (x0.5)."
+  resumen: "recibe la mitad del da\xF1o"
   icono: {fileID: 21300000, guid: c7de15e83dcfcb34aa8c34a683d17690, type: 3}
   esBuff: 1
   turnos: 0
   danoRecibido: 0.5
   anulaDano: 0
+  danoPorTurno: 0
+  enCartas: 0
+  costoExtra: 0

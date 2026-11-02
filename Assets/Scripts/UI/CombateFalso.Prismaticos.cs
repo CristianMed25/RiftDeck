@@ -48,7 +48,7 @@ namespace RiftDeck.UI
             var carta = Instantiate(prefabCarta);
             carta.Bind(DatosCarta.Especial(DatosCarta.Hechizo, indice, h.nombre, h.costo, h.dano, "elemental"), tipos,
                 especiales.hechizos[indice - 1], especiales.marcoHechizo,
-                especiales.materialHechizo != null ? especiales.materialHechizo : prismatico); // el costo va pintado en la carta
+                especiales.materialHechizo != null ? especiales.materialHechizo : prismatico); // el costo va en el anillo, con cifras (CardView.ColocarCosto)
             manoCartas.Agregar(carta);
         }
 
@@ -108,7 +108,8 @@ namespace RiftDeck.UI
         {
             foreach (var c in manoCartas.CartasEnMano().Concat(manoCartas.CartasEnZona()).ToList())
             {
-                if (c.Datos.EsArcano || !string.IsNullOrEmpty(c.Datos.especial)) continue;
+                // las que tienen Penitencia se quedan como están (vuelven cada turno)
+                if (c.Datos.EsArcano || !string.IsNullOrEmpty(c.Datos.especial) || c.Estados.Count > 0) continue;
                 c.transform.SetParent(null);
                 Destroy(c.gameObject);
                 manoCartas.Agregar(NuevaPoker());

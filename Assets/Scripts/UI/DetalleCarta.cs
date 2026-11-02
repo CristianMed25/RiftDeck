@@ -6,6 +6,8 @@ namespace RiftDeck.UI
     /// <summary>
     /// Cuadro con el detalle de la carta que se está inspeccionando: nombre, tipo y qué
     /// hace contra el enemigo actual. Se pone al lado de la carta (a la derecha si cabe).
+    /// Si la carta tiene buffs o debuffs propios (Penitencia), debajo sale un cuadrito con
+    /// cada uno: "Penitencia = +1 de costo". Las cartas sin estados solo muestran el detalle.
     /// </summary>
     public class DetalleCarta : MonoBehaviour
     {
@@ -16,6 +18,9 @@ namespace RiftDeck.UI
         [SerializeField] UnityEngine.UI.Image icono;
         [SerializeField] TMP_Text tipo;
         [SerializeField] TMP_Text texto;
+        [Header("Estados de la carta")]
+        [SerializeField] RectTransform cajaEstados;
+        [SerializeField] TMP_Text textoEstados;
 
         RectTransform Rt => (RectTransform)transform;
 
@@ -35,12 +40,39 @@ namespace RiftDeck.UI
             icono.enabled = t != null && t.icono != null;
             if (icono.enabled) icono.sprite = t.icono;
             texto.text = descripcion;
+            MostrarEstados(carta);
 
             Colocar(carta);
             grupo.alpha = 1;
         }
 
         public void Ocultar() => grupo.alpha = 0;
+
+        void MostrarEstados(CardView carta)
+        {
+            if (cajaEstados == null) return;
+            bool hay = carta.Estados.Count > 0;
+            cajaEstados.gameObject.SetActive(hay);
+            if (!hay) return;
+            var lineas = new System.Text.StringBuilder();
+            foreach (var e in carta.Estados)
+            {
+                if (lineas.Length > 0) lineas.Append('\n');
+                string color = ColorUtility.ToHtmlStringRGB(e.Color);
+                lineas.Append($"<color=#{color}>{e.nombre}</color> = {e.resumen}");
+            }
+            bool combate = false;
+            foreach (var e in carta.Estados) combate |= e.turnos <= 0;
+            lineas.Append(combate ? "\n<color=#C9C1FF>Dura hasta el final del combate</color>" : "\n<color=#C9C1FF>Dura este turno</color>");
+            textoEstados.text = lineas.ToString();
+            textoEstados.ForceMeshUpdate();
+            float alto = Mathf.Ceil(textoEstados.preferredHeight);
+            textoEstados.rectTransform.sizeDelta = new Vector2(textoEstados.rectTransform.sizeDelta.x, alto);
+            cajaEstados.sizeDelta = new Vector2(cajaEstados.sizeDelta.x, alto + 12);
+        }
+
+        /// <summary>Alto total con el cuadrito de estados, para que no se salga de la pantalla.</summary>
+        float AltoTotal => Rt.rect.height + (cajaEstados != null && cajaEstados.gameObject.activeSelf ? cajaEstados.rect.height + 2 : 0);
 
         /// <summary>
         /// Calcula dónde quedará la carta ya levantada y pone el cuadro a su lado,
@@ -62,7 +94,7 @@ namespace RiftDeck.UI
             var limites = padre.rect;
             float x = centro + ancho / 2f + Margen;
             if (x + tam.x > limites.xMax - Margen) x = centro - ancho / 2f - Margen - tam.x;
-            float y = Mathf.Clamp(arriba, limites.yMin + Margen + tam.y, limites.yMax - Margen);
+            float y = Mathf.Clamp(arriba, limites.yMin + Margen + AltoTotal, limites.yMax - Margen);
 
             Rt.anchorMin = Rt.anchorMax = new Vector2(0.5f, 0.5f);
             Rt.pivot = new Vector2(0, 1);

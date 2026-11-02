@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,6 +12,8 @@ namespace RiftDeck.UI
     /// que se mueve (inspeccionar, arrastrar, volar a la zona de jugada) es el hijo
     /// "Visual", que lleva su propio Canvas para dibujarse encima de las demás.
     /// Los toques se los pasa a <see cref="ManoCartas"/>, que decide qué hacer.
+    /// El costo se dibuja con sprites de cifras (<see cref="NumeroPixel"/>), no pintado en el
+    /// arte: si un estado lo cambia (Penitencia: +1), se ve al momento en rojo.
     /// Animaciones tomadas del Deckbuilder Kit: al repartir sale boca abajo del mazo, vuela a
     /// su hueco y se voltea; al ponerla en la zona viene hacia la cámara y baja a su lugar.
     /// </summary>
@@ -45,6 +48,12 @@ namespace RiftDeck.UI
         [SerializeField] UnityEngine.UI.Image marco;
         [Tooltip("Reverso que tapa la carta mientras se reparte (el dorso equipado en la Tienda)")]
         [SerializeField] UnityEngine.UI.Image dorso;
+        [Header("Costo")]
+        [SerializeField] NumeroPixel cifrasCosto;
+        [Tooltip("Cifras de 9 px para la gema de las cartas normales")]
+        [SerializeField] Sprite[] cifrasGrandes;
+        [Tooltip("Cifras de 5x7 para el anillo de costo de las cartas de Spire of Ash")]
+        [SerializeField] Sprite[] cifrasChicas;
 
         public DatosCarta Datos { get; private set; }
         public ManoCartas Mano { get; set; }
@@ -53,11 +62,36 @@ namespace RiftDeck.UI
         /// <summary>Posición en la mano, para volver al mismo lugar desde la zona de jugada.</summary>
         public int IndiceMano { get; set; }
 
+        readonly List<DatosEstado> estados = new List<DatosEstado>();
+        /// <summary>Buffs y debuffs puestos en esta carta (no en las demás de la mano).</summary>
+        public IReadOnlyList<DatosEstado> Estados => estados;
+
+        /// <summary>El costo con los estados de la carta: es el que se paga.</summary>
+        public int Costo
+        {
+            get
+            {
+                int c = Datos.costo;
+                foreach (var e in estados) c += e.costoExtra;
+                return Mathf.Max(0, c);
+            }
+        }
+
         Vector2 desplazamiento, desplazamientoObjetivo, agarre;
         float escala = 1f, escalaObjetivo = 1f;
         // ancho relativo mientras se voltea (1 = de frente)
         float vuelta = 1f;
         bool inspeccionada, arrastrando, presentando;
+        Vector2 posicionCosto;
+        Color colorGema;
+        bool costoEnAnillo;
+
+        void Awake()
+        {
+            var rt = (RectTransform)costo.transform.parent;
+            posicionCosto = rt.anchoredPosition;
+            if (rt.TryGetComponent<UnityEngine.UI.Image>(out var gema)) colorGema = gema.color;
+        }
 
         /// <param name="arteCompleto">Arte que tapa la cara (arcanos y cartas especiales).</param>
         /// <param name="marcoEspecial">Marco debajo del arte, opcional, con su material.</param>
@@ -69,8 +103,11 @@ namespace RiftDeck.UI
             Datos = datos;
             MostrarArte(arteCompleto, conCosto, conDano);
             MostrarMarco(arteCompleto != null ? marcoEspecial : null, materialMarco);
+            estados.Clear();
             costo.text = datos.costo.ToString();
             dano.text = datos.dano.ToString();
+            ColocarCosto(datos.Es(DatosCarta.Hechizo));
+            MostrarCosto();
 
             var tipo = tipos != null ? tipos.Buscar(datos.tipo) : null;
             franja.color = tipo != null ? tipo.color : Color.gray;
@@ -110,6 +147,102 @@ namespace RiftDeck.UI
                 arte.sprite = sprite;
                 // no SetNativeSize: el Canvas propio de la carta tiene otro Reference PPU
                 arte.rectTransform.sizeDelta = sprite.rect.size;
+            }
+        }
+
+        /// <summary>
+        /// Normal: la gema azul arriba a la izquierda con cifras grandes. Hechizos: sin gema,
+        /// cifras chicas dentro del anillo que trae el marco de Spire (centro en el píxel 7,7).
+        /// </summary>
+        void ColocarCosto(bool enAnillo)
+        {
+            costoEnAnillo = enAnillo;
+            var rt = (RectTransform)costo.transform.parent;
+            if (rt.TryGetComponent<UnityEngine.UI.Image>(out var gema)) gema.enabled = !enAnillo;
+            rt.anchoredPosition = enAnillo ? new Vector2(-1, 0) : posicionCosto;
+            // las cifras reemplazan al texto
+            costo.gameObject.SetActive(cifrasCosto == null);
+            if (enAnillo) rt.gameObject.SetActive(true);
+        }
+
+        /// <summary>Blanco si es el de la carta, rojo si subió y menta si bajó.</summary>
+        void MostrarCosto()
+        {
+            int actual = Costo;
+            var color = actual > Datos.costo ? PaletaUI.Rojo : actual < Datos.costo ? PaletaUI.Menta : Color.white;
+            if (cifrasCosto != null) cifrasCosto.Mostrar(actual, color, costoEnAnillo ? cifrasChicas : cifrasGrandes);
+            // el rojo y el menta no se leen sobre el azul: la gema se oscurece si el costo cambió
+            if (costo.transform.parent.TryGetComponent<UnityEngine.UI.Image>(out var gema))
+                gema.color = actual != Datos.costo ? PaletaUI.Noche : colorGema;
+            costo.text = actual.ToString();
+            costo.color = color;
+        }
+
+        /// <summary>
+        /// Un estado le cae a esta carta: el efecto se reproduce encima, a medio camino cambia
+        /// el costo y la cifra salta.
+        /// </summary>
+        public IEnumerator RecibirEstado(DatosEstado estado, Sprite[] cuadros)
+        {
+            UnityEngine.UI.Image efecto = null;
+            if (cuadros != null && cuadros.Length > 0)
+            {
+                var go = new GameObject("Efecto", typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image))
+                    { layer = gameObject.layer };
+                efecto = go.GetComponent<UnityEngine.UI.Image>();
+                efecto.rectTransform.SetParent(visual, false);
+                efecto.rectTransform.anchorMin = efecto.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                efecto.rectTransform.sizeDelta = cuadros[0].rect.size;
+                efecto.raycastTarget = false;
+                efecto.color = estado.Color;
+            }
+            var cara = visual.GetComponent<UnityEngine.UI.Image>();
+            int total = cuadros != null ? cuadros.Length : 6;
+            for (int i = 0; i < total; i++)
+            {
+                if (efecto != null)
+                {
+                    efecto.sprite = cuadros[i];
+                    efecto.transform.SetAsLastSibling();
+                }
+                // destello del color del estado sobre la cara
+                if (cara != null && cara.enabled) cara.color = i % 4 < 2 ? Color.Lerp(Color.white, estado.Color, 0.5f) : Color.white;
+                if (i == total / 2)
+                {
+                    estados.Add(estado);
+                    MostrarCosto();
+                    StartCoroutine(SaltarCosto());
+                }
+                yield return new WaitForSeconds(1f / 20f);
+            }
+            if (cara != null) cara.color = Color.white;
+            if (efecto != null) Destroy(efecto.gameObject);
+        }
+
+        /// <summary>Pone el estado sin animación (la carta vuelve a la mano ya marcada).</summary>
+        public void PonerEstado(DatosEstado estado)
+        {
+            if (estado == null || estados.Contains(estado)) return;
+            estados.Add(estado);
+            MostrarCosto();
+        }
+
+        /// <summary>Se le quitan los estados (el enemigo que los puso murió).</summary>
+        public void QuitarEstados()
+        {
+            if (estados.Count == 0) return;
+            estados.Clear();
+            MostrarCosto();
+        }
+
+        IEnumerator SaltarCosto()
+        {
+            var rt = (RectTransform)costo.transform.parent;
+            var base_ = rt.anchoredPosition;
+            foreach (int dy in new[] { 4, 3, 1, 0 })
+            {
+                rt.anchoredPosition = base_ + new Vector2(0, dy);
+                yield return new WaitForSeconds(0.05f);
             }
         }
 

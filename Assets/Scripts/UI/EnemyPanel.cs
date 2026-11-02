@@ -49,6 +49,9 @@ namespace RiftDeck.UI
 
         Vector2 posicionSprite;
 
+        /// <summary>Las flechas que bajan, para reusarlas sobre las cartas (Penitencia).</summary>
+        public Sprite[] EfectoDebuff => efectoDebuff;
+
         void Awake()
         {
             panelResistencias.SetActive(false);
@@ -181,6 +184,32 @@ namespace RiftDeck.UI
             yield return CuadrosSobreSprite(cuadros, 20f);
         }
 
+        /// <summary>El nombre del estado nuevo sube desde el enemigo, en su color.</summary>
+        public void Anunciar(DatosEstado estado)
+        {
+            // sale sobre la cabeza, para no tapar al enemigo
+            if (numeroFlotante != null) StartCoroutine(Subir(estado.nombre.ToUpperInvariant(), estado.Color, 1.3f));
+        }
+
+        /// <summary>
+        /// Lanza un estado a las cartas: animación de ataque, el nombre sube en su color y el
+        /// enemigo se envuelve en ese color con las flechas que bajan.
+        /// </summary>
+        public IEnumerator Lanzar(DatosEstado estado)
+        {
+            animacion.Reproducir("ataque");
+            Anunciar(estado);
+            if (efectoDebuff != null && efectoDebuff.Length > 0) StartCoroutine(CuadrosSobreSprite(efectoDebuff, 20f, estado.Color));
+            float duracion = Mathf.Max(0.7f, animacion.Duracion("ataque"));
+            for (float t = 0; t < duracion; t += Time.deltaTime)
+            {
+                // late de a saltos (no un degradado suave): 3 destellos
+                sprite.color = Mathf.FloorToInt(t / duracion * 6) % 2 == 0 ? Color.Lerp(Color.white, estado.Color, 0.6f) : Color.white;
+                yield return null;
+            }
+            sprite.color = Color.white;
+        }
+
         /// <summary>
         /// Se cura: cruces verdes, el número sube en Menta y la barra se llena de a poco.
         /// </summary>
@@ -202,12 +231,12 @@ namespace RiftDeck.UI
         }
 
         /// <summary>Un texto que sube derecho desde el enemigo y se apaga (para curas).</summary>
-        IEnumerator Subir(string texto, Color color)
+        IEnumerator Subir(string texto, Color color, float alto = 0.6f)
         {
             var capa = Capa(out _);
             var sombra = Nuevo(texto, PaletaUI.Tinta, capa);
             var numero = Nuevo(texto, color, capa);
-            var desde = PuntoDelSprite(new Vector2(0, 0.6f));
+            var desde = PuntoDelSprite(new Vector2(0, alto));
             const float duracion = 1.1f;
             for (float t = 0; t < duracion; t += Time.deltaTime)
             {
@@ -221,11 +250,14 @@ namespace RiftDeck.UI
         }
 
         /// <summary>Cuadros al doble, centrados en el cuerpo del enemigo (los pies abajo).</summary>
-        IEnumerator CuadrosSobreSprite(Sprite[] cuadros, float fps)
+        IEnumerator CuadrosSobreSprite(Sprite[] cuadros, float fps) => CuadrosSobreSprite(cuadros, fps, Color.white);
+
+        IEnumerator CuadrosSobreSprite(Sprite[] cuadros, float fps, Color color)
         {
             var capa = Capa(out var fondo);
             var img = NuevaImagen(capa, fondo, cuadros[0], PuntoDelSprite(new Vector2(0, -0.2f)));
             img.rectTransform.sizeDelta = cuadros[0].rect.size * 2;
+            img.color = color;
             foreach (var c in cuadros)
             {
                 img.sprite = c;

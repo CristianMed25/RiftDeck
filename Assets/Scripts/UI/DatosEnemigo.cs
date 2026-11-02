@@ -33,6 +33,10 @@ namespace RiftDeck.UI
         [Range(0.1f, 1f)] public float curaAlLevantarse = 0.5f;
         [Tooltip("Buff que gana al levantarse (dura hasta el final del combate)")]
         public DatosEstado estadoAlLevantarse;
+        [Tooltip("Debuff que lanza a todas las cartas de la mano (Penitencia del Caballero)")]
+        public DatosEstado estadoCartas;
+        [Tooltip("Lo lanza una sola vez: la primera vez que su vida baja a esta parte (0.5 = la mitad)")]
+        [Range(0.05f, 1f)] public float umbralEstadoCartas = 0.5f;
         public List<Resistencia> resistencias = new List<Resistencia>();
         [Tooltip("El primero es el de reposo. Nombres: idle, ataque, golpe, muerte, bloqueo")]
         public AnimacionSprites.Clip[] clips;
