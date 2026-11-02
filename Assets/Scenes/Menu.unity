@@ -1029,6 +1029,7 @@ GameObject:
   - component: {fileID: 529914790}
   - component: {fileID: 529914789}
   - component: {fileID: 529914788}
+  - component: {fileID: 529914794}
   m_Layer: 5
   m_Name: Configuracion
   m_TagString: Untagged
@@ -1187,6 +1188,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 529914786}
   m_CullTransparentMesh: 1
+--- !u!114 &529914794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529914786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8795d726f8b6aa946b87bc8ac0925a8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.IrAEscena
+  escena: Configuracion
 --- !u!1 &537905755
 GameObject:
   m_ObjectHideFlags: 0
@@ -2826,6 +2840,7 @@ GameObject:
   - component: {fileID: 1463479463}
   - component: {fileID: 1463479462}
   - component: {fileID: 1463479461}
+  - component: {fileID: 1463479467}
   m_Layer: 5
   m_Name: Creditos
   m_TagString: Untagged
@@ -2984,6 +2999,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1463479459}
   m_CullTransparentMesh: 1
+--- !u!114 &1463479467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1463479459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8795d726f8b6aa946b87bc8ac0925a8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.IrAEscena
+  escena: Creditos
 --- !u!1 &1469136513
 GameObject:
   m_ObjectHideFlags: 0

@@ -28,16 +28,25 @@ namespace RiftDeck.UI
             public TMP_Text descripcion;
             [NonSerialized] public Vector2 posicion;
             [NonSerialized] public Vector2 posicionIcono;
+            [NonSerialized] public Vector2 posicionDescripcion;
             [NonSerialized] public InclinacionAumento inclinacion;
             [NonSerialized] public Material relieve; // copia propia: cada tarjeta se inclina por su lado
         }
 
         [SerializeField] CanvasGroup grupo;
+        /// <summary>Alto de cada línea del nombre (8 px de Press Start 2P + 2 de interlineado).</summary>
+        const float AltoLineaNombre = 10;
+
         [SerializeField] TMP_Text titulo;
         [SerializeField] TMP_Text subtitulo;
         [SerializeField] Opcion[] opciones = new Opcion[3];
         [SerializeField] Material prismatico;
         [SerializeField] Material prismaticoRelieve;
+        [Tooltip("Metal de los marcos de plata y de oro (shader UIMetal)")]
+        [SerializeField] Material plata;
+        [SerializeField] Material oro;
+        [Tooltip("La fuente del título de calidad con el arcoíris (shader TMPPrismatico)")]
+        [SerializeField] Material textoPrismatico;
         [SerializeField] UnityEngine.UI.Image destello;
         [SerializeField] Sprite[] cuadrosDestello;
 
@@ -75,6 +84,7 @@ namespace RiftDeck.UI
             {
                 o.posicion = ((RectTransform)o.boton.transform).anchoredPosition;
                 o.posicionIcono = o.icono.rectTransform.anchoredPosition;
+                o.posicionDescripcion = o.descripcion.rectTransform.anchoredPosition;
                 o.inclinacion = o.boton.GetComponent<InclinacionAumento>();
                 if (o.inclinacion == null) o.inclinacion = o.boton.gameObject.AddComponent<InclinacionAumento>();
             }
@@ -156,12 +166,25 @@ namespace RiftDeck.UI
         void Pintar(Opcion o, DatosAumento a)
         {
             bool prisma = a.calidad == CalidadAumento.Prismatico;
-            o.marco.color = DatosAumento.ColorDe(a.calidad);
-            o.marco.material = prisma ? prismatico : null;
+            // el marco lo pinta su material; sin material, se tiñe del color de la calidad
+            var metal = a.calidad switch
+            {
+                CalidadAumento.Plata => plata,
+                CalidadAumento.Oro => oro,
+                _ => prismatico,
+            };
+            o.marco.material = metal;
+            o.marco.color = metal != null ? Color.white : DatosAumento.ColorDe(a.calidad);
             o.calidad.text = DatosAumento.NombreDe(a.calidad).ToUpperInvariant();
             o.calidad.color = prisma ? PaletaUI.Blanco : DatosAumento.ColorDe(a.calidad);
+            // el título del prismático lleva el arcoíris; los demás, la fuente tal cual
+            o.calidad.fontSharedMaterial = prisma && textoPrismatico != null ? textoPrismatico : o.calidad.font.material;
             o.nombre.text = a.nombre;
             o.descripcion.text = a.descripcion;
+            // un nombre largo baja en dos líneas y empuja la descripción
+            o.nombre.ForceMeshUpdate();
+            int lineasExtra = Mathf.Max(0, o.nombre.textInfo.lineCount - 1);
+            o.descripcion.rectTransform.anchoredPosition = o.posicionDescripcion + Vector2.down * (lineasExtra * AltoLineaNombre);
             o.icono.enabled = a.icono != null;
             int escala = 1;
             if (a.icono != null)

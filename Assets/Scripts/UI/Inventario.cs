@@ -50,6 +50,9 @@ namespace RiftDeck.UI
             Guardar();
         }
 
+        /// <summary>Avisa a la UI después de borrar el progreso (ver <see cref="Ajustes.BorrarProgreso"/>).</summary>
+        public static void Recargar() => Guardar();
+
         static void Guardar()
         {
             PlayerPrefs.Save();

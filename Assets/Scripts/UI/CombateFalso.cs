@@ -19,9 +19,11 @@ namespace RiftDeck.UI
     ///   último siempre prismático. Los dos jugadores ven las mismas tres opciones.
     /// - Arcanos mayores (prismático): una carta de tarot por turno. Jugar 3 juntas forma un
     ///   bono permanente (máximo 5); jugar 1 sola da un efecto solo en esa jugada.
+    /// - Los otros prismáticos (hechizos prohibidos, RAAWRMERICA y póker) y Todo o nada están
+    ///   en CombateFalso.Prismaticos.cs.
     /// Se reemplaza entero cuando llegue la lógica real.
     /// </summary>
-    public class CombateFalso : MonoBehaviour
+    public partial class CombateFalso : MonoBehaviour
     {
         const int RondasTotales = 4;
         const int CartasPorMano = 6;
@@ -34,6 +36,8 @@ namespace RiftDeck.UI
         class Jugador
         {
             public int maxMana, mana, reserva, puntos, vida, mazo;
+            /// <summary>Puntos hechos en cada ronda, para la tabla de resultados.</summary>
+            public readonly int[] porRonda = new int[RondasTotales];
             public readonly List<DatosAumento> aumentos = new List<DatosAumento>();
             public readonly Queue<Oferta> pendientes = new Queue<Oferta>();
             /// <summary>Arcanos en la mano (índices); se guardan de un turno al otro.</summary>
@@ -41,7 +45,19 @@ namespace RiftDeck.UI
             /// <summary>Bonos permanentes de los tríos, por tipo de daño.</summary>
             public readonly Dictionary<string, float> bonoTipo = new Dictionary<string, float>();
             public int trios, manaExtra;
-            public bool usoEco;
+            /// <summary>Hechizos prohibidos en la mano (1 a 6) y en qué paso va la probabilidad de robar.</summary>
+            public readonly List<int> hechizos = new List<int>();
+            public int pasoHechizo;
+            /// <summary>RAAWRMERICA: armas en la mano, armas escondidas en el mazo y armas ya juntadas en el Arsenal.</summary>
+            public readonly List<int> armas = new List<int>();
+            public readonly List<int> armasEnMazo = new List<int>();
+            public readonly List<int> arsenal = new List<int>();
+            public bool tieneArsenal;
+            /// <summary>Daño hecho al enemigo actual (para el arma de premio al 20 %).</summary>
+            public int danoEnemigo;
+            /// <summary>Todo o nada: cuántas veces jugó toda la mano o pasó sin jugar.</summary>
+            public int todoNada;
+            public bool jugoEsteTurno;
 
             public bool Tiene(string id) => aumentos.Exists(a => a.id == id);
         }
@@ -72,6 +88,8 @@ namespace RiftDeck.UI
         [SerializeField] CanvasGroup avisoTurno;
         [SerializeField] TMP_Text avisoTexto;
         [SerializeField] TMP_Text avisoJugador;
+        [SerializeField] PasaDispositivo pasaDispositivo;
+        [SerializeField] string escenaResultados = "Resultados";
         [Header("En cada ronda sale uno al azar de cada lista, en este orden")]
         [SerializeField] DatosEnemigo[] normales;
         [SerializeField] DatosEnemigo[] medios;
@@ -82,7 +100,11 @@ namespace RiftDeck.UI
         [SerializeField] DatosAumento[] aumentosOro;
         [SerializeField] DatosAumento[] aumentosPrismaticos;
         [SerializeField] ArcanosMayores arcanos;
+        [Tooltip("Estado de los aumentos que llevan cuenta (tríos, hechizos, Arsenal, Todo o nada)")]
         [SerializeField] TMP_Text textoArcanos;
+        [SerializeField] CartasEspeciales especiales;
+        [SerializeField] Material prismatico;
+        [SerializeField] LluviaArsenal lluvia;
 
         static readonly Dictionary<string, string[]> Nombres = new Dictionary<string, string[]>
         {
@@ -114,11 +136,13 @@ namespace RiftDeck.UI
 
         void Start()
         {
+            Time.timeScale = Ajustes.Velocidad;
             botonJugar.onClick.AddListener(() => StartCoroutine(Lanzar()));
             botonPasar.onClick.AddListener(() => StartCoroutine(CambioDeTurno()));
             avisoTurno.alpha = 0;
             avisoTurno.blocksRaycasts = false;
             manoCartas.Tipos = tipos;
+            enemigo.Efectos = especiales;
             manoCartas.Descripcion = Describir;
             manoCartas.PidioElegir += Elegir;
             manoCartas.PidioDevolver += Devolver;
@@ -130,6 +154,8 @@ namespace RiftDeck.UI
             RepartirMano();
             StartCoroutine(Arrancar());
         }
+
+        void OnDestroy() => Time.timeScale = 1;
 
         IEnumerator Arrancar()
         {
@@ -149,13 +175,24 @@ namespace RiftDeck.UI
             var viejas = manoCartas.CartasEnMano();
             viejas.AddRange(manoCartas.CartasEnZona());
             foreach (var c in viejas) { c.transform.SetParent(null); Destroy(c.gameObject); }
-            int cantidad = CartasPorMano + (Actual.Tiene("mano") ? 1 : 0);
-            for (int i = 0; i < cantidad; i++) manoCartas.Agregar(NuevaCarta());
-            foreach (int indice in Actual.arcanos) AgregarArcano(indice);
+            var j = Actual;
+            int cantidad = CartasPorMano + (j.Tiene("mano") ? 1 : 0);
+            for (int i = 0; i < cantidad; i++)
+            {
+                // las armas de RAAWRMERICA están escondidas en el mazo: salen con su probabilidad
+                if (j.armasEnMazo.Count > 0 && Random.value < (float)j.armasEnMazo.Count / Mathf.Max(1, j.mazo))
+                {
+                    j.armas.Add(j.armasEnMazo[0]);
+                    j.armasEnMazo.RemoveAt(0);
+                }
+                else manoCartas.Agregar(NuevaCarta());
+            }
+            AgregarPersistentes(j);
         }
 
         CardView NuevaCarta()
         {
+            if (Actual.Tiene("poker")) return NuevaPoker();
             var carta = Instantiate(prefabCarta);
             carta.Bind(CartaAlAzar(), tipos);
             return carta;
@@ -212,6 +249,7 @@ namespace RiftDeck.UI
         string Describir(CardView carta)
         {
             var d = carta.Datos;
+            if (!string.IsNullOrEmpty(d.especial)) return DescribirEspecial(d);
             if (d.EsArcano)
             {
                 bool mana = d.tipo == ArcanosMayores.FamiliaMana;
@@ -240,6 +278,7 @@ namespace RiftDeck.UI
         {
             int disponible = Actual.mana + Actual.reserva - CostoElegido();
             if (carta.Datos.EsArcano && ArcanosEnZona() >= 3) StartCoroutine(AvisarPista("Máximo 3 arcanos"));
+            else if (carta.Datos.Es(DatosCarta.Poker) && EnZona(DatosCarta.Poker).Count >= 5) StartCoroutine(AvisarPista("Una mano de póker es de 5"));
             else if (carta.Datos.costo <= disponible) manoCartas.MoverAZona(carta);
             else StartCoroutine(AvisarPista("No te alcanza el maná"));
             Refrescar();
@@ -259,6 +298,8 @@ namespace RiftDeck.UI
             int n = ArcanosEnZona();
             if (n == 2) return "Pon 1 arcano o 3";
             if (n == 3 && Actual.trios >= MaxTrios) return "Ya tienes 5 tríos";
+            if (EnZona(DatosCarta.Arsenal).Count > 0 && Actual.arsenal.Count < ArmasParaArsenal)
+                return $"El Arsenal pide {ArmasParaArsenal} armas";
             return null;
         }
 
@@ -277,8 +318,9 @@ namespace RiftDeck.UI
             barraMana.Mostrar(j.mana, ManaMaxima(j), j.reserva, costo);
             hudJ1.MostrarAumentos(jugadores[0].aumentos);
             hudJ2.MostrarAumentos(jugadores[1].aumentos);
-            textoArcanos.gameObject.SetActive(j.Tiene("arcanos"));
-            textoArcanos.text = $"Tríos {j.trios}/{MaxTrios}" + (j.trios > 0 ? "\n" + string.Join("\n", Bonos(j)) : "");
+            var estado = new List<string>(Estado(j));
+            textoArcanos.gameObject.SetActive(estado.Count > 0);
+            textoArcanos.text = string.Join("\n", estado);
             enemigo.MostrarVida(vidaEnemigo, actual.vida);
             textoTurno.text = "Turno J" + activo;
             textoRonda.text = $"RONDA {ronda}/{RondasTotales}";
@@ -294,8 +336,11 @@ namespace RiftDeck.UI
             textoPista.gameObject.SetActive(zonaVacia);
             textoPista.text = "Toca o arrastra cartas aquí";
             textoPista.color = colorPista;
-            textoAvisoZona.gameObject.SetActive(bloqueo != null);
-            textoAvisoZona.text = bloqueo;
+            // con cartas de póker en la zona se ve qué mano se está armando
+            string aviso = bloqueo ?? VistaPoker();
+            textoAvisoZona.gameObject.SetActive(aviso != null);
+            textoAvisoZona.text = aviso;
+            textoAvisoZona.color = bloqueo != null ? PaletaUI.Rosa : PaletaUI.Oro;
             botonJugar.interactable = !ocupado && !zonaVacia && bloqueo == null;
             botonPasar.interactable = !ocupado;
             manoCartas.Activa = !ocupado;
@@ -305,13 +350,15 @@ namespace RiftDeck.UI
 
         void Awake() => colorPista = textoPista.color;
 
-        IEnumerator AvisarPista(string mensaje)
+        IEnumerator AvisarPista(string mensaje) => AvisarPista(mensaje, PaletaUI.Rosa);
+
+        IEnumerator AvisarPista(string mensaje, Color color)
         {
             // con cartas en la zona la pista grande queda tapada: se usa el aviso chico
             var texto = manoCartas.CartasEnZona().Count > 0 ? textoAvisoZona : textoPista;
             texto.gameObject.SetActive(true);
             texto.text = mensaje;
-            texto.color = PaletaUI.Rosa;
+            texto.color = color;
             yield return new WaitForSeconds(1.2f);
             Refrescar();
         }
@@ -336,37 +383,48 @@ namespace RiftDeck.UI
             var normales = jugada.FindAll(c => !c.Datos.EsArcano);
             string soloTipo = jugados.Count == 1 ? jugados[0].tipo : null;
 
-            float total = 0;
-            foreach (var c in normales) total += Puntos(c.Datos) * (c.Datos.tipo == soloTipo ? 2 : 1);
-            if (j.Tiene("todo")) total *= normales.Count >= 3 ? 1.6f : 0.75f;
-            if (j.Tiene("eco") && !j.usoEco && normales.Count > 0) { total *= 1.5f; j.usoEco = true; }
+            // cada grupo de cartas especiales suma a su manera (CombateFalso.Prismaticos.cs)
+            float total = DanoJugada(j, normales.ConvertAll(c => c.Datos), soloTipo, out var arsenal, out var mano);
+            if (j.Tiene("todo")) total *= MultiplicadorTodoNada(j);
             bool critico = j.Tiene("critico") && normales.Count > 0 && Random.value < 0.25f;
             if (critico) total *= 2;
             int dano = Mathf.RoundToInt(total);
 
             foreach (var a in jugados) j.arcanos.Remove(a.arcano - 1);
             foreach (var c in jugada) { c.transform.SetParent(null); Destroy(c.gameObject); }
+            bool nuevoArsenal = SacarJugadas(j, normales.ConvertAll(c => c.Datos));
+            j.jugoEsteTurno = true;
+            bool todo = j.Tiene("todo") && TodaLaManoJugada();
+            if (todo) j.todoNada++;
 
             if (soloTipo == ArcanosMayores.FamiliaMana) j.reserva = Mathf.Min(ManaBar.MaxReserva, j.reserva + 2);
 
+            if (mano != null) StartCoroutine(AvisarPista(mano, PaletaUI.Oro));
+            if (arsenal != null) yield return lluvia.Lanzar(arsenal.Value, arsenal.Value == LluviaArsenal.Nivel.Nuclear ? 10 : armasDisparadas);
             if (normales.Count > 0)
             {
                 if (escudo) enemigo.RecibirGolpe(0, Color.white, true);
                 else
                 {
                     j.puntos += dano;
+                    j.danoEnemigo += dano;
+                    j.porRonda[ronda - 1] += dano;
                     vidaEnemigo -= dano;
-                    enemigo.RecibirGolpe(dano, critico ? PaletaUI.Oro : PaletaUI.DeJugador(activo), false);
+                    Refrescar();
+                    yield return Golpear(dano, critico ? PaletaUI.Oro : PaletaUI.DeJugador(activo));
                 }
             }
             Refrescar();
             yield return new WaitForSeconds(0.45f);
 
             if (jugados.Count == 3) yield return FormarTrio(j, jugados);
+            if (nuevoArsenal) AgregarArsenal(j);
+            if (todo) yield return Aviso("Todo o nada · jugaste toda la mano", $"¡TODO! x{MultiplicadorTodoNada(j):0.0}", PaletaUI.Oro, null, 16);
 
             if (vidaEnemigo <= 0)
             {
                 yield return enemigo.Morir();
+                yield return PremiarArmas();
                 yield return SiguienteEnemigo();
                 yield return OfrecerPendientes();
             }
@@ -380,6 +438,7 @@ namespace RiftDeck.UI
             actual = lista[Random.Range(0, lista.Length)];
             vidaEnemigo = actual.vida;
             escudo = false;
+            foreach (var j in jugadores) j.danoEnemigo = 0;
             enemigo.Mostrar(actual, tipos);
 
             int oferta = ronda - 1;
@@ -396,14 +455,16 @@ namespace RiftDeck.UI
             if (indiceEnemigo >= 3)
             {
                 indiceEnemigo = 0;
-                bool fin = ronda >= RondasTotales;
-                int ganador = jugadores[0].puntos >= jugadores[1].puntos ? 1 : 2;
-                yield return Aviso(fin ? "Fin de la partida · gana" : "Ronda superada",
-                    fin ? "JUGADOR " + ganador : "RONDA " + (ronda + 1),
-                    fin ? PaletaUI.DeJugador(ganador) : PaletaUI.Oro, null);
-                // la pantalla de resultados es del integrante 3: aquí se vuelve a empezar
-                ronda = fin ? 1 : ronda + 1;
-                if (fin) Reiniciar();
+                if (ronda >= RondasTotales)
+                {
+                    yield return Aviso("Fin de la partida", "¡A CONTAR!", PaletaUI.Oro, null);
+                    // la lógica de fin de partida es del integrante 3; aquí solo se pasan los puntos
+                    ResultadoPartida.Guardar(jugadores[0].porRonda, jugadores[1].porRonda);
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(escenaResultados);
+                    yield break;
+                }
+                yield return Aviso("Ronda superada", "RONDA " + (ronda + 1), PaletaUI.Oro, null);
+                ronda++;
             }
             NuevoEnemigo();
             Refrescar();
@@ -426,9 +487,18 @@ namespace RiftDeck.UI
             escudo = bloquea;
             enemigo.MostrarEscudo(bloquea);
 
+            // Todo o nada: pasar sin jugar nada también cuenta
+            bool nada = Actual.Tiene("todo") && !Actual.jugoEsteTurno;
+            if (nada) Actual.todoNada++;
+            int robado = 0;
+            if (nada) yield return Aviso("Todo o nada · pasaste sin jugar", $"¡NADA! x{MultiplicadorTodoNada(Actual):0.0}", PaletaUI.Oro, null, 16);
+
             int siguiente = activo == 1 ? 2 : 1;
-            string texto = bloquea ? $"{actual.nombre} se protege… turno de" : "El enemigo actúa… ahora es turno de";
-            yield return Aviso(texto, "JUGADOR " + siguiente, PaletaUI.DeJugador(siguiente), () =>
+            string texto = bloquea ? $"{actual.nombre} se protege · turno de" : "El enemigo actúa · turno de";
+            // deja ver la animación del enemigo antes de tapar
+            yield return new WaitForSeconds(0.6f);
+            yield return pasaDispositivo.Mostrar(texto, siguiente, jugadores[0].puntos, jugadores[1].puntos,
+                $"RONDA {ronda}/{RondasTotales}", () =>
             {
                 // ya con la pantalla tapada: así no se alcanza a ver la mano del otro
                 var j = Actual;
@@ -439,11 +509,14 @@ namespace RiftDeck.UI
                 s.maxMana = Mathf.Min(ManaBar.MaxMana, s.maxMana + (s.Tiene("rapido") ? 2 : 1));
                 s.mana = ManaMaxima(s);
                 if (s.Tiene("ahorro")) s.reserva = Mathf.Min(ManaBar.MaxReserva, s.reserva + 1);
-                s.usoEco = false;
+                s.jugoEsteTurno = false;
                 if (s.Tiene("arcanos")) DarArcano(s, false);
+                if (s.Tiene("prohibidos")) robado = TirarHechizo(s);
                 RepartirMano();
                 Refrescar();
             });
+            if (robado > 0)
+                yield return Aviso("Hechizo prohibido", CartasEspeciales.Hechizos[robado - 1].nombre.ToUpperInvariant(), PaletaUI.VioletaReserva, null);
             yield return OfrecerPendientes();
             ocupado = false;
             Refrescar();
@@ -491,6 +564,8 @@ namespace RiftDeck.UI
                 j.aumentos.Add(elegido);
                 if (elegido.id == "arcanos") DarArcano(j, true);
                 if (elegido.id == "mano") manoCartas.Agregar(NuevaCarta());
+                if (elegido.id == "raawr") yield return RaawrMerica(j);
+                if (elegido.id == "poker") PasarAPoker();
                 Refrescar();
             }
         }
@@ -518,21 +593,6 @@ namespace RiftDeck.UI
         {
             if (j.manaExtra > 0) yield return $"+{j.manaExtra} maná";
             foreach (var par in j.bonoTipo) yield return $"+{Mathf.RoundToInt(par.Value * 100)}% {NombreFamilia(par.Key)}";
-        }
-
-        void Reiniciar()
-        {
-            foreach (var j in jugadores)
-            {
-                j.aumentos.Clear();
-                j.pendientes.Clear();
-                j.arcanos.Clear();
-                j.bonoTipo.Clear();
-                j.trios = j.manaExtra = 0;
-                j.puntos = 0;
-            }
-            PrepararAumentos();
-            RepartirMano();
         }
 
         /// <summary>Tapa la pantalla con un aviso grande; con la pantalla tapada corre "mientras".</summary>

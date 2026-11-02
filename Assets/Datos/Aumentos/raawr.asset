@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e937b87edab35974abb208d8384c922c, type: 3}
+  m_Name: raawr
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosAumento
+  id: raawr
+  nombre: RAAWRMERICA!!
+  descripcion: '3 de las 6 armas van a tu mazo. Al jugarlas llenan el Arsenal: 5 balas, 7 misiles. Las 6 distintas: bomba nuclear.'
+  calidad: 2
+  icono: {fileID: 21300000, guid: 59e08573e0a09ea479b97252d7e3533c, type: 3}
+  silueta: {fileID: 21300000, guid: 7ebfbb69928ace24490032b65c587173, type: 3}
+  relieve: {fileID: 21300000, guid: 59610e81bcfee2b429ed0dfda02435e0, type: 3}
+  aura: {fileID: 21300000, guid: ecf77cc94c4d1b64a8942d80144b607e, type: 3}

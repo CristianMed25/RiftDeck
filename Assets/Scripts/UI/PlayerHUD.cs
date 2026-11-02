@@ -27,7 +27,7 @@ namespace RiftDeck.UI
 
         public void Mostrar(int jugador, int vida, int puntosActuales, bool activo)
         {
-            nombre.text = $"J{jugador} · {(activo ? "juega" : "espera")}";
+            nombre.text = $"{Ajustes.NombreCorto(jugador)} · {(activo ? "juega" : "espera")}";
             nombre.color = PaletaUI.DeJugador(jugador);
             puntos.text = puntosActuales.ToString("N0", Colombia);
             for (int i = 0; i < corazones.Length; i++)

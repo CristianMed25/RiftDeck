@@ -10,12 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e937b87edab35974abb208d8384c922c, type: 3}
-  m_Name: eco
+  m_Name: prohibidos
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosAumento
-  id: eco
-  nombre: Eco
-  descripcion: Tu primera jugada de cada turno hace x1.5.
+  id: prohibidos
+  nombre: Hechizos prohibidos
+  descripcion: Cada turno, 12.5% de robar un hechizo (+2.5% por turno sin suerte). Cada elemento distinto en la jugada x2.
   calidad: 2
-  icono: {fileID: 21300000, guid: 0eac20266b92376408bb6004d621450f, type: 3}
+  icono: {fileID: 21300000, guid: b9603a95247fa2b498d55a8612151bee, type: 3}
   silueta: {fileID: 0}
-  aura: {fileID: 21300000, guid: eeb2b76f37c5d3d4d93c382965b0786f, type: 3}
+  relieve: {fileID: 0}
+  aura: {fileID: 21300000, guid: 96eb0e5fc69137a47b1fee6684bfc241, type: 3}

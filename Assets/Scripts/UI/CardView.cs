@@ -33,6 +33,8 @@ namespace RiftDeck.UI
         [SerializeField] Canvas capa;
         [Tooltip("Arte a tamaño real que tapa la cara (cartas de tarot)")]
         [SerializeField] UnityEngine.UI.Image arte;
+        [Tooltip("Marco de las cartas especiales, debajo del arte (puede llevar el material prismático)")]
+        [SerializeField] UnityEngine.UI.Image marco;
 
         public DatosCarta Datos { get; private set; }
         public ManoCartas Mano { get; set; }
@@ -45,10 +47,16 @@ namespace RiftDeck.UI
         float escala = 1f, escalaObjetivo = 1f;
         bool inspeccionada, arrastrando;
 
-        public void Bind(DatosCarta datos, TiposDano tipos, Sprite arteCompleto = null)
+        /// <param name="arteCompleto">Arte que tapa la cara (arcanos y cartas especiales).</param>
+        /// <param name="marcoEspecial">Marco debajo del arte, opcional, con su material.</param>
+        /// <param name="conCosto">Deja a la vista el costo sobre el arte.</param>
+        /// <param name="conDano">Deja a la vista el daño sobre el arte.</param>
+        public void Bind(DatosCarta datos, TiposDano tipos, Sprite arteCompleto = null, Sprite marcoEspecial = null,
+            Material materialMarco = null, bool conCosto = false, bool conDano = false)
         {
             Datos = datos;
-            MostrarArte(arteCompleto);
+            MostrarArte(arteCompleto, conCosto, conDano);
+            MostrarMarco(arteCompleto != null ? marcoEspecial : null, materialMarco);
             costo.text = datos.costo.ToString();
             dano.text = datos.dano.ToString();
 
@@ -67,17 +75,24 @@ namespace RiftDeck.UI
         }
 
         /// <summary>
-        /// Con arte (un arcano), la carta es solo esa imagen: se apagan costo, daño,
-        /// ícono y franja.
+        /// Con arte (un arcano o una carta especial), la carta es esa imagen: se apagan el
+        /// ícono, la franja y, si no se piden, el costo y el daño.
         /// </summary>
-        void MostrarArte(Sprite sprite)
+        void MostrarArte(Sprite sprite, bool conCosto, bool conDano)
         {
             bool hay = sprite != null && arte != null;
             foreach (Transform hijo in visual)
-                if (hijo != brillo.transform && (arte == null || hijo != arte.transform))
-                    hijo.gameObject.SetActive(!hay);
+            {
+                if (hijo == brillo.transform || (arte != null && hijo == arte.transform) || (marco != null && hijo == marco.transform))
+                    continue;
+                bool numero = (conCosto && costo.transform.IsChildOf(hijo)) || (conDano && dano.transform.IsChildOf(hijo));
+                hijo.gameObject.SetActive(!hay || numero);
+            }
             if (visual.TryGetComponent<UnityEngine.UI.Image>(out var cara)) cara.enabled = !hay;
             if (arte == null) return;
+            // marco y arte van al fondo: el costo, el daño y el borde de la zona quedan encima
+            arte.transform.SetSiblingIndex(0);
+            if (marco != null) marco.transform.SetSiblingIndex(0);
             arte.gameObject.SetActive(hay);
             if (hay)
             {
@@ -85,6 +100,16 @@ namespace RiftDeck.UI
                 // no SetNativeSize: el Canvas propio de la carta tiene otro Reference PPU
                 arte.rectTransform.sizeDelta = sprite.rect.size;
             }
+        }
+
+        void MostrarMarco(Sprite sprite, Material material)
+        {
+            if (marco == null) return;
+            marco.gameObject.SetActive(sprite != null);
+            if (sprite == null) return;
+            marco.sprite = sprite;
+            marco.material = material;
+            marco.rectTransform.sizeDelta = sprite.rect.size;
         }
 
         /// <summary>En la zona de jugada lleva el borde Oro.</summary>

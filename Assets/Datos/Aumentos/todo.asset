@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosAumento
   id: todo
   nombre: Todo o nada
-  descripcion: "Jugadas de 3 o m\xE1s cartas: x1.6. Con menos: x0.75."
-  calidad: 2
+  descripcion: "Jugar toda la mano o pasar sin jugar: +0.2 al multiplicador de da\xF1o, acumulable."
+  calidad: 1
   icono: {fileID: 21300000, guid: 81b185e104342984c8d054b25573cda4, type: 3}
   silueta: {fileID: 0}
-  aura: {fileID: 21300000, guid: c6298499a90b8374b96a3c5e1c250c7d, type: 3}
+  relieve: {fileID: 0}
+  aura: {fileID: 0}

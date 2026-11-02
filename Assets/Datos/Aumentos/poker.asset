@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e937b87edab35974abb208d8384c922c, type: 3}
+  m_Name: poker
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.DatosAumento
+  id: poker
+  nombre: "P\xF3ker"
+  descripcion: "Tu mano pasa a ser de p\xF3ker. El da\xF1o sale de la mano que armes: pareja, color, full... Puede salir el comod\xEDn."
+  calidad: 2
+  icono: {fileID: 21300000, guid: 58edbb8d0cf187143a210c9cb79e9167, type: 3}
+  silueta: {fileID: 21300000, guid: 4b70329e7a36e664f9de3cde12866f06, type: 3}
+  relieve: {fileID: 21300000, guid: dd0eb46aa9dc2c14680e8a7dea792337, type: 3}
+  aura: {fileID: 21300000, guid: 5c26cd8f646a863428fe3081a036ca5e, type: 3}
