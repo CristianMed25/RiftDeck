@@ -47,7 +47,8 @@ namespace RiftDeck.UI
             var h = CartasEspeciales.Hechizos[indice - 1];
             var carta = Instantiate(prefabCarta);
             carta.Bind(DatosCarta.Especial(DatosCarta.Hechizo, indice, h.nombre, h.costo, h.dano, "elemental"), tipos,
-                especiales.hechizos[indice - 1], especiales.marcoHechizo, prismatico, true);
+                especiales.hechizos[indice - 1], especiales.marcoHechizo,
+                especiales.materialHechizo != null ? especiales.materialHechizo : prismatico); // el costo va pintado en la carta
             manoCartas.Agregar(carta);
         }
 
@@ -193,7 +194,7 @@ namespace RiftDeck.UI
                     resistencia += actual.Multiplicador(c.tipo) * (c.tipo == soloTipo ? 2 : 1);
                 }
                 resistencia /= r.puntuan.Count;
-                Sumar(fichas * r.mult * resistencia * FactorPoker);
+                Sumar(fichas * r.mult * resistencia * FactorPoker * DanoRecibido);
                 mano = $"{r.nombre} · {fichas} x{r.mult}";
             }
 
@@ -220,7 +221,7 @@ namespace RiftDeck.UI
                 var nivel = LluviaArsenal.NivelDe(j.arsenal);
                 float suma = j.arsenal.Sum(i => CartasEspeciales.Armas[i - 1].dano) * 10;
                 float mult = nivel == LluviaArsenal.Nivel.Nuclear ? 3f : nivel == LluviaArsenal.Nivel.Misiles ? 2f : 1.5f;
-                Sumar(suma * mult * actual.Multiplicador("impacto"));
+                Sumar(suma * mult * actual.Multiplicador("impacto") * DanoRecibido);
                 arsenal = nivel;
                 mano = LluviaArsenal.NombreDe(nivel);
             }

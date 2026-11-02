@@ -28,6 +28,11 @@ namespace RiftDeck.UI
         public int escala = 2;
         [Tooltip("Vacío o \"bloqueo\": el enemigo puede anular el daño del turno siguiente")]
         public string habilidad;
+        [Tooltip("La primera vez que su vida llega a 0 se cura y gana un buff; la segunda muere")]
+        public bool levantarse;
+        [Range(0.1f, 1f)] public float curaAlLevantarse = 0.5f;
+        [Tooltip("Buff que gana al levantarse (dura hasta el final del combate)")]
+        public DatosEstado estadoAlLevantarse;
         public List<Resistencia> resistencias = new List<Resistencia>();
         [Tooltip("El primero es el de reposo. Nombres: idle, ataque, golpe, muerte, bloqueo")]
         public AnimacionSprites.Clip[] clips;

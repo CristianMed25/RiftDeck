@@ -13,7 +13,10 @@ namespace RiftDeck.UI
     /// - Cada ronda son 3 enemigos: uno Normal, uno Medio y uno Élite, al azar dentro de su nivel.
     /// - El daño de una jugada es daño × resistencia × 10: baja la vida del enemigo y
     ///   suma esos puntos al jugador.
-    /// - El enemigo con la habilidad "bloqueo" puede anular el daño de todo el turno siguiente.
+    /// - El enemigo con la habilidad "bloqueo" puede anular el daño de todo el turno siguiente
+    ///   (estado Escudo). Los buffs y debuffs del enemigo cambian el daño que recibe.
+    /// - El enemigo que se levanta (el Caballero) se cura la primera vez que llega a 0 y gana
+    ///   su buff hasta el final del combate; la segunda vez sí muere.
     /// - Aumentos (estilo TFT): 3 por partida, uno en cada una de las rondas 1 a 3, al llegar
     ///   un enemigo elegido al azar. Uno es de plata, otro de oro (en orden al azar) y el
     ///   último siempre prismático. Los dos jugadores ven las mismas tres opciones.
@@ -25,7 +28,8 @@ namespace RiftDeck.UI
     /// </summary>
     public partial class CombateFalso : MonoBehaviour
     {
-        const int RondasTotales = 4;
+        // 4 en el duelo y 1 en la partida rápida (pantalla Modo)
+        static int RondasTotales => ModoPartida.Rondas;
         const int CartasPorMano = 6;
         const float ProbabilidadBloqueo = 0.5f;
         const int OfertasTotales = 3;
@@ -105,6 +109,10 @@ namespace RiftDeck.UI
         [SerializeField] CartasEspeciales especiales;
         [SerializeField] Material prismatico;
         [SerializeField] LluviaArsenal lluvia;
+        [Header("Buffs y debuffs del enemigo")]
+        [SerializeField] DatosEstado estadoEscudo;
+        [Tooltip("Lo pone un hechizo de hielo")]
+        [SerializeField] DatosEstado estadoVulnerable;
 
         static readonly Dictionary<string, string[]> Nombres = new Dictionary<string, string[]>
         {
@@ -125,7 +133,8 @@ namespace RiftDeck.UI
         int indiceEnemigo;
         DatosEnemigo actual;
         int vidaEnemigo;
-        bool escudo;
+        readonly List<EstadoActivo> estados = new List<EstadoActivo>();
+        bool seLevanto;
         bool ocupado;
         // en qué enemigo de cada ronda (0 a 2) sale la oferta, y de qué calidad es
         readonly int[] enemigoDeOferta = new int[OfertasTotales];
@@ -133,10 +142,24 @@ namespace RiftDeck.UI
         System.Random azar;
 
         Jugador Actual => jugadores[activo - 1];
+        bool Escudo => estados.Exists(e => e.datos.anulaDano);
+
+        /// <summary>Cuánto del daño le llega al enemigo según sus buffs y debuffs.</summary>
+        float DanoRecibido
+        {
+            get
+            {
+                float m = 1f;
+                foreach (var e in estados) m *= e.datos.danoRecibido;
+                return m;
+            }
+        }
 
         void Start()
         {
             Time.timeScale = Ajustes.Velocidad;
+            // la semilla de la preparación: las mismas cartas y enemigos con el mismo código
+            if (ModoPartida.Semilla != 0) Random.InitState(ModoPartida.Semilla);
             botonJugar.onClick.AddListener(() => StartCoroutine(Lanzar()));
             botonPasar.onClick.AddListener(() => StartCoroutine(CambioDeTurno()));
             avisoTurno.alpha = 0;
@@ -237,7 +260,7 @@ namespace RiftDeck.UI
             if (j.Tiene("filo")) bono += 0.10f;
             if (j.Tiene("especialista") && m > 1f) bono += 0.30f;
             if (j.bonoTipo.TryGetValue(c.tipo, out var b)) bono += b;
-            return Mathf.RoundToInt(c.dano * m * 10 * bono);
+            return Mathf.RoundToInt(c.dano * m * 10 * bono * DanoRecibido);
         }
 
         string NombreFamilia(string familia)
@@ -262,9 +285,11 @@ namespace RiftDeck.UI
             float m = actual.Multiplicador(d.tipo);
             string mult = "x" + m.ToString("0.##", CultureInfo.InvariantCulture);
             string efecto = m > 1f ? " (débil)" : m < 1f ? " (resiste)" : "";
+            float r = DanoRecibido;
+            if (r != 1f) efecto += " · estados x" + r.ToString("0.##", CultureInfo.InvariantCulture);
             string texto = $"Cuesta {d.costo} de maná.\nInflige {d.dano} de daño {(t != null ? t.nombre.ToLower() : d.tipo)}.\n" +
                            $"{actual.nombre}: {mult}{efecto} = {Puntos(d)} pts";
-            return escudo ? texto + "\n¡Este turno lo bloquea!" : texto;
+            return Escudo ? texto + "\n¡Este turno lo bloquea!" : texto;
         }
 
         int CostoElegido()
@@ -390,6 +415,8 @@ namespace RiftDeck.UI
             if (critico) total *= 2;
             int dano = Mathf.RoundToInt(total);
 
+            bool hielo = normales.Exists(c => c.Datos.Es(DatosCarta.Hechizo)
+                && System.Array.IndexOf(CartasEspeciales.Hechizos[c.Datos.indice - 1].elementos, "hielo") >= 0);
             foreach (var a in jugados) j.arcanos.Remove(a.arcano - 1);
             foreach (var c in jugada) { c.transform.SetParent(null); Destroy(c.gameObject); }
             bool nuevoArsenal = SacarJugadas(j, normales.ConvertAll(c => c.Datos));
@@ -403,15 +430,17 @@ namespace RiftDeck.UI
             if (arsenal != null) yield return lluvia.Lanzar(arsenal.Value, arsenal.Value == LluviaArsenal.Nivel.Nuclear ? 10 : armasDisparadas);
             if (normales.Count > 0)
             {
-                if (escudo) enemigo.RecibirGolpe(0, Color.white, true);
+                if (Escudo) enemigo.RecibirGolpe(0, Color.white, true);
                 else
                 {
                     j.puntos += dano;
                     j.danoEnemigo += dano;
                     j.porRonda[ronda - 1] += dano;
+                    RegistrarEstilo(normales.ConvertAll(c => c.Datos), dano);
                     vidaEnemigo -= dano;
                     Refrescar();
                     yield return Golpear(dano, critico ? PaletaUI.Oro : PaletaUI.DeJugador(activo));
+                    if (hielo && vidaEnemigo > 0 && estadoVulnerable != null) yield return AplicarEstado(estadoVulnerable);
                 }
             }
             Refrescar();
@@ -421,6 +450,7 @@ namespace RiftDeck.UI
             if (nuevoArsenal) AgregarArsenal(j);
             if (todo) yield return Aviso("Todo o nada · jugaste toda la mano", $"¡TODO! x{MultiplicadorTodoNada(j):0.0}", PaletaUI.Oro, null, 16);
 
+            if (vidaEnemigo <= 0 && actual.levantarse && !seLevanto) yield return Levantarse();
             if (vidaEnemigo <= 0)
             {
                 yield return enemigo.Morir();
@@ -436,8 +466,14 @@ namespace RiftDeck.UI
         {
             var lista = indiceEnemigo == 0 ? normales : indiceEnemigo == 1 ? medios : elites;
             actual = lista[Random.Range(0, lista.Length)];
+            // el primero es el que se mostró en la preparación
+            if (ModoPartida.PrimerEnemigo != null && indiceEnemigo == 0 && System.Array.IndexOf(lista, ModoPartida.PrimerEnemigo) >= 0)
+                actual = ModoPartida.PrimerEnemigo;
+            ModoPartida.PrimerEnemigo = null;
             vidaEnemigo = actual.vida;
-            escudo = false;
+            estados.Clear();
+            seLevanto = false;
+            enemigo.MostrarEstados(estados);
             foreach (var j in jugadores) j.danoEnemigo = 0;
             enemigo.Mostrar(actual, tipos);
 
@@ -471,6 +507,54 @@ namespace RiftDeck.UI
             yield return enemigo.Entrar();
         }
 
+        /// <summary>Para el Perfil: el daño se reparte entre los tipos de las cartas jugadas.</summary>
+        void RegistrarEstilo(List<DatosCarta> cartas, int dano)
+        {
+            float suma = 0;
+            foreach (var c in cartas) suma += Mathf.Max(1, c.dano);
+            foreach (var c in cartas) Estadisticas.SumarDano(activo, c.tipo, Mathf.RoundToInt(dano * Mathf.Max(1, c.dano) / suma));
+        }
+
+        // ---------- Buffs y debuffs del enemigo ----------
+
+        /// <summary>Pone el estado (o le renueva los turnos), con sus flechas.</summary>
+        IEnumerator AplicarEstado(DatosEstado d)
+        {
+            var e = estados.Find(x => x.datos == d);
+            if (e == null)
+            {
+                e = new EstadoActivo { datos = d };
+                estados.Add(e);
+            }
+            e.turnos = d.turnos;
+            enemigo.MostrarEstados(estados, e);
+            yield return enemigo.Flechas(d.esBuff);
+        }
+
+        void PasarTurnoEstados()
+        {
+            foreach (var e in estados) if (e.turnos > 0) e.turnos--;
+            estados.RemoveAll(e => e.datos.turnos > 0 && e.turnos <= 0);
+            enemigo.MostrarEstados(estados);
+        }
+
+        /// <summary>
+        /// La primera vez que llega a 0: se cura (cruces verdes), gana su buff hasta el final
+        /// del combate y avisa. La segunda vez ya muere.
+        /// </summary>
+        IEnumerator Levantarse()
+        {
+            seLevanto = true;
+            yield return new WaitForSeconds(0.4f);
+            int desde = Mathf.Max(0, vidaEnemigo);
+            int hasta = Mathf.RoundToInt(actual.vida * actual.curaAlLevantarse);
+            vidaEnemigo = hasta;
+            yield return enemigo.Curar(hasta - desde, desde, hasta, actual.vida);
+            if (actual.estadoAlLevantarse != null) yield return AplicarEstado(actual.estadoAlLevantarse);
+            string buff = actual.estadoAlLevantarse != null ? " y gana " + actual.estadoAlLevantarse.nombre : "";
+            yield return Aviso($"{actual.nombre} se levanta{buff}", "¡NO CAE!", PaletaUI.Menta, null);
+        }
+
         // ---------- Turno ----------
 
         IEnumerator CambioDeTurno()
@@ -481,11 +565,12 @@ namespace RiftDeck.UI
             foreach (var c in manoCartas.CartasEnZona()) manoCartas.MoverAMano(c);
             Refrescar();
 
-            // acción del enemigo
+            // pasa un turno para los buffs y debuffs; después actúa el enemigo
+            PasarTurnoEstados();
             bool bloquea = actual.habilidad == "bloqueo" && Random.value < ProbabilidadBloqueo;
             enemigo.Actuar(bloquea ? "bloqueo" : "ataque");
-            escudo = bloquea;
             enemigo.MostrarEscudo(bloquea);
+            if (bloquea && estadoEscudo != null) StartCoroutine(AplicarEstado(estadoEscudo));
 
             // Todo o nada: pasar sin jugar nada también cuenta
             bool nada = Actual.Tiene("todo") && !Actual.jugoEsteTurno;

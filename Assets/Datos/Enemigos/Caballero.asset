@@ -17,6 +17,9 @@ MonoBehaviour:
   vida: 1500
   escala: 2
   habilidad: bloqueo
+  levantarse: 1
+  curaAlLevantarse: 0.5
+  estadoAlLevantarse: {fileID: 11400000, guid: 7ca61d42c88d85643b14fb168bc0fafa, type: 2}
   resistencias:
   - tipo: cortante
     multiplicador: 0.5

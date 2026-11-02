@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,6 +11,8 @@ namespace RiftDeck.UI
     /// que se mueve (inspeccionar, arrastrar, volar a la zona de jugada) es el hijo
     /// "Visual", que lleva su propio Canvas para dibujarse encima de las demás.
     /// Los toques se los pasa a <see cref="ManoCartas"/>, que decide qué hacer.
+    /// Animaciones tomadas del Deckbuilder Kit: al repartir sale boca abajo del mazo, vuela a
+    /// su hueco y se voltea; al ponerla en la zona viene hacia la cámara y baja a su lugar.
     /// </summary>
     public class CardView : MonoBehaviour,
         IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler,
@@ -22,6 +25,11 @@ namespace RiftDeck.UI
         const float SubidaInspeccion = 30f;
         const int OrdenInspeccion = 5;
         const int OrdenArrastre = 10;
+        const int OrdenPresentar = 12;
+        const float EscalaReparto = 0.5f;
+        const float DuracionVuelta = 0.25f;
+        // 2 = 6 px de pantalla por píxel de arte: grande y nítida frente a la cámara
+        const float EscalaPresentar = 2f;
 
         [SerializeField] RectTransform visual;
         [SerializeField] UnityEngine.UI.Image franja;
@@ -35,6 +43,8 @@ namespace RiftDeck.UI
         [SerializeField] UnityEngine.UI.Image arte;
         [Tooltip("Marco de las cartas especiales, debajo del arte (puede llevar el material prismático)")]
         [SerializeField] UnityEngine.UI.Image marco;
+        [Tooltip("Reverso que tapa la carta mientras se reparte (el dorso equipado en la Tienda)")]
+        [SerializeField] UnityEngine.UI.Image dorso;
 
         public DatosCarta Datos { get; private set; }
         public ManoCartas Mano { get; set; }
@@ -45,7 +55,9 @@ namespace RiftDeck.UI
 
         Vector2 desplazamiento, desplazamientoObjetivo, agarre;
         float escala = 1f, escalaObjetivo = 1f;
-        bool inspeccionada, arrastrando;
+        // ancho relativo mientras se voltea (1 = de frente)
+        float vuelta = 1f;
+        bool inspeccionada, arrastrando, presentando;
 
         /// <param name="arteCompleto">Arte que tapa la cara (arcanos y cartas especiales).</param>
         /// <param name="marcoEspecial">Marco debajo del arte, opcional, con su material.</param>
@@ -68,8 +80,7 @@ namespace RiftDeck.UI
                 icono.sprite = tipo.icono;
                 icono.rectTransform.sizeDelta = tipo.icono.rect.size * EscalaIcono;
             }
-            // entra desde abajo, como si se repartiera
-            desplazamiento = new Vector2(0, -40);
+            if (dorso != null) dorso.gameObject.SetActive(false);
             SetEnZona(false);
             SetJugable(true);
         }
@@ -122,7 +133,7 @@ namespace RiftDeck.UI
         public void SetInspeccion(bool activa)
         {
             inspeccionada = activa;
-            if (arrastrando) return;
+            if (arrastrando || presentando) return;
             desplazamientoObjetivo = activa ? new Vector2(0, SubidaInspeccion) : Vector2.zero;
             escalaObjetivo = activa ? EscalaInspeccion : 1f;
             Capa(activa ? OrdenInspeccion : 0);
@@ -131,6 +142,7 @@ namespace RiftDeck.UI
         public void EmpezarArrastre(PointerEventData e)
         {
             arrastrando = true;
+            presentando = false;
             escalaObjetivo = 1f;
             Capa(OrdenArrastre);
             agarre = PuntoLocal(e) - desplazamiento;
@@ -159,6 +171,78 @@ namespace RiftDeck.UI
             Capa(OrdenArrastre);
         }
 
+        /// <summary>Escondida hasta que la mano la reparta (si no, se ve un cuadro en su hueco).</summary>
+        public void Esconder()
+        {
+            escala = escalaObjetivo = 0;
+            visual.localScale = Vector3.zero;
+        }
+
+        /// <summary>
+        /// Sale boca abajo y chica desde <paramref name="desde"/> (el mazo), vuela a su hueco y
+        /// se voltea al llegar. Las de una misma mano salen una tras otra.
+        /// </summary>
+        public void Repartir(Vector3 desde, float retraso, Sprite reverso)
+        {
+            StopCoroutine(nameof(Reparto));
+            StartCoroutine(Reparto(desde, retraso, reverso));
+        }
+
+        IEnumerator Reparto(Vector3 desde, float retraso, Sprite reverso)
+        {
+            // escondida hasta su turno
+            escala = 0;
+            escalaObjetivo = 0;
+            if (retraso > 0) yield return new WaitForSeconds(retraso);
+            desplazamiento = Raiz.InverseTransformPoint(desde);
+            desplazamientoObjetivo = Vector2.zero;
+            escala = EscalaReparto;
+            escalaObjetivo = 1f;
+            Capa(OrdenArrastre);
+            bool conDorso = dorso != null && reverso != null;
+            if (conDorso)
+            {
+                dorso.sprite = reverso;
+                dorso.rectTransform.sizeDelta = reverso.rect.size;
+                dorso.transform.SetAsLastSibling();
+                dorso.gameObject.SetActive(true);
+            }
+            yield return new WaitForSeconds(0.12f);
+            // se voltea: se angosta mostrando el dorso y se abre mostrando la cara
+            for (float t = 0; t < DuracionVuelta; t += Time.deltaTime)
+            {
+                float k = t / DuracionVuelta;
+                vuelta = Mathf.Abs(Mathf.Cos(k * Mathf.PI));
+                if (conDorso) dorso.gameObject.SetActive(k < 0.5f);
+                yield return null;
+            }
+            vuelta = 1f;
+            if (conDorso) dorso.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Al ponerla en la zona: viene hacia la cámara (al centro de la pantalla y al doble),
+        /// se queda un instante y baja a su lugar en la zona.
+        /// </summary>
+        public void Presentar(Vector3 centro)
+        {
+            StopCoroutine(nameof(Presentacion));
+            StartCoroutine(Presentacion(centro));
+        }
+
+        IEnumerator Presentacion(Vector3 centro)
+        {
+            presentando = true;
+            Capa(OrdenPresentar);
+            desplazamientoObjetivo = Raiz.InverseTransformPoint(centro);
+            escalaObjetivo = EscalaPresentar;
+            yield return new WaitForSeconds(0.32f);
+            if (!presentando) yield break; // la agarraron mientras tanto
+            presentando = false;
+            desplazamientoObjetivo = inspeccionada ? new Vector2(0, SubidaInspeccion) : Vector2.zero;
+            escalaObjetivo = inspeccionada ? EscalaInspeccion : 1f;
+        }
+
         void Update()
         {
             float k = 1f - Mathf.Exp(-Suavizado * Time.deltaTime);
@@ -169,10 +253,10 @@ namespace RiftDeck.UI
 
             // se dibuja en píxel entero para que no se vea borroso
             visual.anchoredPosition = new Vector2(Mathf.Round(desplazamiento.x), Mathf.Round(desplazamiento.y));
-            visual.localScale = new Vector3(escala, escala, 1f);
+            visual.localScale = new Vector3(escala * vuelta, escala, 1f);
 
             // terminó de volar: deja de dibujarse encima
-            if (!arrastrando && !inspeccionada && desplazamiento == Vector2.zero && capa.overrideSorting) Capa(0);
+            if (!arrastrando && !inspeccionada && !presentando && desplazamiento == Vector2.zero && escala == 1f && capa.overrideSorting) Capa(0);
         }
 
         void Capa(int orden)

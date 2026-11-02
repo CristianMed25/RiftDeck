@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
@@ -8,7 +9,8 @@ namespace RiftDeck.UI
     /// <summary>
     /// Enemigo al centro: nombre, nivel, botón "?" con las resistencias, sprite animado
     /// y barra de vida. También hace las reacciones: sacudida y número al recibir daño,
-    /// bloqueo, ataque, muerte y entrada del siguiente enemigo.
+    /// bloqueo, ataque, muerte y entrada del siguiente enemigo, y muestra sus buffs y debuffs
+    /// (flechas que suben o bajan, curación y la fila de íconos con su explicación).
     /// </summary>
     public class EnemyPanel : MonoBehaviour
     {
@@ -32,6 +34,18 @@ namespace RiftDeck.UI
         [SerializeField] TMP_Text textoVida;
         [Tooltip("Texto apagado que se clona para cada número de daño")]
         [SerializeField] TMP_Text numeroFlotante;
+        [Header("Buffs y debuffs")]
+        [Tooltip("Fila de íconos bajo el enemigo; la plantilla va apagada adentro")]
+        [SerializeField] RectTransform filaEstados;
+        [SerializeField] IconoEstado plantillaEstado;
+        [SerializeField] RectTransform tooltip;
+        [SerializeField] TMP_Text tooltipTitulo;
+        [SerializeField] TMP_Text tooltipTexto;
+        [SerializeField] TMP_Text tooltipDuracion;
+        [Tooltip("Cuadros de Spire of Ash a 20 fps: flechas que suben, que bajan y cruces verdes")]
+        [SerializeField] Sprite[] efectoBuff;
+        [SerializeField] Sprite[] efectoDebuff;
+        [SerializeField] Sprite[] efectoCurar;
 
         Vector2 posicionSprite;
 
@@ -41,6 +55,8 @@ namespace RiftDeck.UI
             botonResistencias.onClick.AddListener(() => panelResistencias.SetActive(!panelResistencias.activeSelf));
             posicionSprite = sprite.rectTransform.anchoredPosition;
             if (numeroFlotante != null) numeroFlotante.gameObject.SetActive(false);
+            if (plantillaEstado != null) plantillaEstado.gameObject.SetActive(false);
+            if (tooltip != null) tooltip.gameObject.SetActive(false);
             MostrarEscudo(false);
         }
 
@@ -97,6 +113,125 @@ namespace RiftDeck.UI
         public void MostrarEscudo(bool activo)
         {
             if (estado != null) estado.gameObject.SetActive(activo);
+        }
+
+        // ---------- Buffs y debuffs ----------
+
+        readonly List<IconoEstado> iconos = new List<IconoEstado>();
+        IconoEstado conTooltip;
+
+        /// <summary>Dibuja la fila de estados; el que es nuevo entra con un salto.</summary>
+        public void MostrarEstados(IReadOnlyList<EstadoActivo> estados, EstadoActivo nuevo = null)
+        {
+            if (filaEstados == null) return;
+            while (iconos.Count < estados.Count)
+            {
+                var i = Instantiate(plantillaEstado, filaEstados);
+                i.Panel = this;
+                iconos.Add(i);
+            }
+            for (int k = 0; k < iconos.Count; k++)
+            {
+                bool hay = k < estados.Count;
+                iconos[k].gameObject.SetActive(hay);
+                if (!hay) continue;
+                iconos[k].Mostrar(estados[k]);
+                if (estados[k] == nuevo) StartCoroutine(iconos[k].Saltar());
+            }
+            if (conTooltip != null && (!conTooltip.gameObject.activeSelf)) OcultarTooltip(conTooltip);
+            else if (conTooltip != null) MostrarTooltip(conTooltip);
+        }
+
+        public void MostrarTooltip(IconoEstado icono)
+        {
+            if (tooltip == null || icono.Estado == null) return;
+            conTooltip = icono;
+            var d = icono.Estado.datos;
+            tooltipTitulo.text = (d.esBuff ? "Buff · " : "Debuff · ") + d.nombre;
+            tooltipTitulo.color = d.esBuff ? PaletaUI.Menta : PaletaUI.Rosa;
+            tooltipTexto.text = d.descripcion;
+            tooltipDuracion.text = icono.Estado.Duracion;
+            tooltip.gameObject.SetActive(true);
+            tooltip.SetAsLastSibling();
+            // alto según los textos, en píxeles enteros
+            float alto = Alto(tooltipTexto), altoDuracion = Alto(tooltipDuracion);
+            tooltip.sizeDelta = new Vector2(tooltip.sizeDelta.x, 6 + 8 + 4 + alto + 4 + altoDuracion + 6);
+        }
+
+        static float Alto(TMP_Text t)
+        {
+            t.ForceMeshUpdate();
+            float alto = Mathf.Ceil(t.preferredHeight);
+            t.rectTransform.sizeDelta = new Vector2(t.rectTransform.sizeDelta.x, alto);
+            return alto;
+        }
+
+        public void OcultarTooltip(IconoEstado icono)
+        {
+            if (tooltip == null || conTooltip != icono) return;
+            tooltip.gameObject.SetActive(false);
+            conTooltip = null;
+        }
+
+        /// <summary>Flechas que suben (buff) o que bajan (debuff) sobre el enemigo.</summary>
+        public IEnumerator Flechas(bool buff)
+        {
+            var cuadros = buff ? efectoBuff : efectoDebuff;
+            if (cuadros == null || cuadros.Length == 0) yield break;
+            yield return CuadrosSobreSprite(cuadros, 20f);
+        }
+
+        /// <summary>
+        /// Se cura: cruces verdes, el número sube en Menta y la barra se llena de a poco.
+        /// </summary>
+        public IEnumerator Curar(int cantidad, int desde, int hasta, int maxima)
+        {
+            animacion.Reproducir("idle");
+            if (efectoCurar != null && efectoCurar.Length > 0) StartCoroutine(CuadrosSobreSprite(efectoCurar, 16f));
+            if (numeroFlotante != null) StartCoroutine(Subir("+" + cantidad.ToString("N0", Colombia), PaletaUI.Menta));
+            const float duracion = 0.8f;
+            for (float t = 0; t < duracion; t += Time.deltaTime)
+            {
+                float k = Mathf.SmoothStep(0, 1, t / duracion);
+                MostrarVida(Mathf.RoundToInt(Mathf.Lerp(desde, hasta, k)), maxima);
+                sprite.color = Color.Lerp(Color.white, new Color(0.6f, 1f, 0.75f), Mathf.PingPong(t * 6, 1));
+                yield return null;
+            }
+            sprite.color = Color.white;
+            MostrarVida(hasta, maxima);
+        }
+
+        /// <summary>Un texto que sube derecho desde el enemigo y se apaga (para curas).</summary>
+        IEnumerator Subir(string texto, Color color)
+        {
+            var capa = Capa(out _);
+            var sombra = Nuevo(texto, PaletaUI.Tinta, capa);
+            var numero = Nuevo(texto, color, capa);
+            var desde = PuntoDelSprite(new Vector2(0, 0.6f));
+            const float duracion = 1.1f;
+            for (float t = 0; t < duracion; t += Time.deltaTime)
+            {
+                float k = t / duracion;
+                Poner(numero, sombra, k < 0.15f ? 32 : 24, desde + new Vector2(0, Mathf.Round(30 * Mathf.Sqrt(k))), 0);
+                numero.alpha = sombra.alpha = k < 0.7f ? 1 : 1f - Mathf.Floor((k - 0.7f) / 0.3f * 4) / 4f;
+                yield return null;
+            }
+            Destroy(numero.gameObject);
+            Destroy(sombra.gameObject);
+        }
+
+        /// <summary>Cuadros al doble, centrados en el cuerpo del enemigo (los pies abajo).</summary>
+        IEnumerator CuadrosSobreSprite(Sprite[] cuadros, float fps)
+        {
+            var capa = Capa(out var fondo);
+            var img = NuevaImagen(capa, fondo, cuadros[0], PuntoDelSprite(new Vector2(0, -0.2f)));
+            img.rectTransform.sizeDelta = cuadros[0].rect.size * 2;
+            foreach (var c in cuadros)
+            {
+                img.sprite = c;
+                yield return new WaitForSeconds(1f / fps);
+            }
+            Destroy(img.gameObject);
         }
 
         public enum Efecto { Ninguno, Bala, Explosion, ExplosionGrande, Fuego, Hielo, Rayo }
