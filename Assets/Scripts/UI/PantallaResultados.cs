@@ -32,6 +32,11 @@ namespace RiftDeck.UI
             if (OroCobrado) return;
             OroCobrado = true;
             Inventario.GanarOro(OroPorPartida);
+            // una sola vez por partida, como el oro
+            int a = 0, b = 0;
+            foreach (int p in PuntosJ1) a += p;
+            foreach (int p in PuntosJ2) b += p;
+            Estadisticas.RegistrarPartida(a, b);
         }
     }
 

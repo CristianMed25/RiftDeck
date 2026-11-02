@@ -27,6 +27,12 @@ namespace RiftDeck.UI
         [SerializeField] RectTransform zona;
         [SerializeField] UnityEngine.UI.Image marcoZona;
         [SerializeField] DetalleCarta detalle;
+        [Header("Reparto (animación del Deckbuilder Kit)")]
+        [Tooltip("De dónde salen las cartas al repartir (el mazo)")]
+        [SerializeField] RectTransform origenReparto;
+        [Tooltip("Dorsos de la Tienda; sale el equipado o, si no hay, el primero")]
+        [SerializeField] DatosCosmetico[] dorsos;
+        [SerializeField] float pausaReparto = 0.07f;
 
         public event Action<CardView> PidioElegir;
         public event Action<CardView> PidioDevolver;
@@ -90,10 +96,35 @@ namespace RiftDeck.UI
             return lista;
         }
 
+        readonly List<CardView> porRepartir = new List<CardView>();
+
+        /// <summary>La carta entra a la mano; al final del cuadro se reparten todas las nuevas.</summary>
         public void Agregar(CardView carta)
         {
             carta.Mano = this;
             carta.transform.SetParent(mano, false);
+            carta.Esconder();
+            porRepartir.Add(carta);
+        }
+
+        void LateUpdate()
+        {
+            if (porRepartir.Count == 0) return;
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(mano);
+            var desde = origenReparto != null ? origenReparto.position : mano.position;
+            var reverso = Dorso();
+            int n = 0;
+            foreach (var c in porRepartir)
+                if (c != null && c.transform.parent == mano) c.Repartir(desde, n++ * pausaReparto, reverso);
+            porRepartir.Clear();
+        }
+
+        Sprite Dorso()
+        {
+            if (dorsos == null || dorsos.Length == 0) return null;
+            var id = Inventario.Equipado(CategoriaCosmetico.Dorso);
+            foreach (var d in dorsos) if (d != null && d.id == id) return d.vista;
+            return dorsos[0] != null ? dorsos[0].vista : null;
         }
 
         public void MoverAZona(CardView carta)
@@ -101,6 +132,9 @@ namespace RiftDeck.UI
             carta.IndiceMano = carta.transform.GetSiblingIndex();
             Mover(carta, zona, zona.childCount);
             carta.SetEnZona(true);
+            // al centro de la pantalla, frente a la cámara, y después a su lugar
+            var lienzo = (RectTransform)canvas.transform;
+            carta.Presentar(lienzo.TransformPoint(lienzo.rect.center));
         }
 
         public void MoverAMano(CardView carta)

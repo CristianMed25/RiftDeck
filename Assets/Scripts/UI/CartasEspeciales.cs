@@ -5,7 +5,7 @@ namespace RiftDeck.UI
     /// <summary>
     /// Arte y reglas de las cartas que dan los aumentos prismáticos: hechizos prohibidos,
     /// armas y Arsenal de RAAWRMERICA y la baraja de póker. El arte lo arma
-    /// tools/cartas_especiales.py con marcos de Deckbuilder Kit Free y Pixel Cards Lite.
+    /// tools/cartas_especiales.py con marcos de Spire of Ash (hechizos) y Pixel Cards Lite.
     /// </summary>
     [CreateAssetMenu(menuName = "RiftDeck/Cartas especiales", fileName = "CartasEspeciales")]
     public class CartasEspeciales : ScriptableObject
@@ -52,8 +52,10 @@ namespace RiftDeck.UI
         public static readonly string[] NombresPalo = { "picas", "corazones", "diamantes", "tréboles" };
         public static readonly string[] TipoDePalo = { "cortante", "elemental", "perforante", "impacto" };
 
-        [Header("Hechizos prohibidos (el marco va con el material prismático)")]
+        [Header("Hechizos prohibidos: el marco es un mapa de normales para el prismático con relieve")]
         public Sprite marcoHechizo;
+        [Tooltip("Prismático con relieve (metal que refleja la luz), no el arcoíris plano")]
+        public Material materialHechizo;
         public Sprite[] hechizos = new Sprite[6];
         [Header("RAAWRMERICA")]
         public Sprite[] armas = new Sprite[6];

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: CartasEspeciales
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.UI.CartasEspeciales
   marcoHechizo: {fileID: 21300000, guid: b0e8faee5e3b1b14fbd85d94ea157194, type: 3}
+  materialHechizo: {fileID: 2100000, guid: d12a35b9526cfb54e9550c6b1153d1d9, type: 2}
   hechizos:
   - {fileID: 21300000, guid: 563248e8e5b980d48b93ee78f304cf60, type: 3}
   - {fileID: 21300000, guid: 2d976bdbb1e27f04f9ed82140f98238b, type: 3}
