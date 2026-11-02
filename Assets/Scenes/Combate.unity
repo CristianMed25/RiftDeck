@@ -17486,6 +17486,80 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2074313310}
   m_CullTransparentMesh: 1
+--- !u!1 &262345545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1486100384}
+  - component: {fileID: 1186528907}
+  - component: {fileID: 255994545}
+  - component: {fileID: 1318275365}
+  m_Layer: 0
+  m_Name: ControladoresPartida
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1486100384
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 262345545}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1186528907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 262345545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f5c72cb7e9cb534fa864ca764607c7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.Partida.ControladorTurnos
+  pasaDispositivo: {fileID: 1791674589}
+--- !u!114 &255994545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 262345545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1000229724c2f694b94a96c717112101, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.Partida.ControladorFinPartida
+  escenaResultados: Resultados
+--- !u!114 &1318275365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 262345545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dcd352012596fc60b18130e322d2af0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.Partida.InicializadorPartida
+  controladorTurnos: {fileID: 1186528907}
+  controladorFinPartida: {fileID: 255994545}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -17494,3 +17568,4 @@ SceneRoots:
   - {fileID: 651041925}
   - {fileID: 1518980081}
   - {fileID: 930383152}
+  - {fileID: 1486100384}
