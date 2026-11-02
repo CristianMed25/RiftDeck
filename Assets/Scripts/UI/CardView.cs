@@ -84,6 +84,7 @@ namespace RiftDeck.UI
         // ancho relativo mientras se voltea (1 = de frente)
         float vuelta = 1f;
         bool inspeccionada, arrastrando, presentando;
+        bool cartaGenerada;
         Vector2 posicionCosto;
         Color colorGema;
         bool costoEnAnillo;
@@ -103,7 +104,9 @@ namespace RiftDeck.UI
             Material materialMarco = null, bool conCosto = false, bool conDano = false)
         {
             Datos = datos;
-            Carta = null;
+            LiberarCartaGenerada();
+            Carta = CrearCartaDeUI(datos);
+            cartaGenerada = true;
             MostrarArte(arteCompleto, conCosto, conDano);
             MostrarMarco(arteCompleto != null ? marcoEspecial : null, materialMarco);
             estados.Clear();
@@ -131,7 +134,34 @@ namespace RiftDeck.UI
             if (carta == null) throw new System.ArgumentNullException(nameof(carta));
             Bind(new DatosCarta(carta.nombreCarta, 0, carta.valorBase, carta.tipoDano.ToString()),
                 tipos, carta.spriteIlustracion, null, null, false, false);
+            LiberarCartaGenerada();
             Carta = carta;
+        }
+
+        void OnDestroy() => LiberarCartaGenerada();
+
+        void LiberarCartaGenerada()
+        {
+            if (cartaGenerada && Carta != null)
+                Destroy(Carta);
+            cartaGenerada = false;
+        }
+
+        CartaSO CrearCartaDeUI(DatosCarta datos)
+        {
+            var carta = ScriptableObject.CreateInstance<CartaSO>();
+            carta.id = datos.nombre;
+            carta.nombreCarta = datos.nombre;
+            carta.valorBase = datos.dano;
+            carta.tipoDano = ConvertirTipoDano(datos.tipo);
+            return carta;
+        }
+
+        static TipoDano ConvertirTipoDano(string tipo)
+        {
+            return System.Enum.TryParse(tipo, true, out TipoDano resultado)
+                ? resultado
+                : TipoDano.Elemental;
         }
 
         /// <summary>

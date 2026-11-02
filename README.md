@@ -84,6 +84,23 @@ Hoy el combate lo mueve **`CombateFalso`** (`Assets/Scripts/UI/CombateFalso.cs` 
 - Todos los números de este README (vida, daño, costos y porcentajes) son **provisionales**.
 - El integrante 3 ya subió `GestorPartida` (turnos, rondas y puntos, en `Assets/Scripts/Partida/`). Hay que acordar quién le pasa los puntos (`SumarPuntos`) y quién avanza la ronda.
 
+## Integración de `CombatSistem`
+
+`CombatEngine` permanece como servicio C# puro y recibe una `CartaSO` y un
+`ResistenciasData`. `CardView.Bind` adapta automáticamente el `DatosCarta` que
+produce la UI actual a una carta de combate, por lo que no es necesario cambiar
+`CombateFalso` ni los prefabs existentes. `ControladorCombate` escucha
+`ManoCartas.PidioElegir`, consume `DatosEnemigo.Multiplicador`, actualiza
+`GestorPartida` y refresca los `PlayerHUD`.
+
+Para activar el combate real en la escena `Combate`, añade `ControladorCombate`
+al mismo objeto que gestiona la escena y asigna `ManoCartas`,
+`ControladorTurnos`, los dos `PlayerHUD` y el `DatosEnemigo` actual. Si no se
+asigna un `DatosEnemigo`, usa el asset `ResistenciasData` configurado en el
+Inspector. Desactiva o elimina `CombateFalso` para evitar que ambos
+controladores respondan al mismo evento. Conecta `uiRefrescada` a la rutina que
+reparte la siguiente mano.
+
 ## Efectos de estado (buffs y debuffs)
 
 Todos funcionan en el combate de prueba. Cada uno es un asset `DatosEstado` en `Assets/Datos/Estados/` con su ícono de Spire of Ash. Al pararse sobre el ícono del enemigo, o sobre una carta afectada, se ve qué hace y cuánto dura.

@@ -15,6 +15,9 @@ namespace RiftDeck.Combate
         [SerializeField] ManoCartas manoCartas;
         [SerializeField] ControladorTurnos controladorTurnos;
         [SerializeField] ResistenciasData resistenciasObjetivo;
+        [SerializeField] DatosEnemigo enemigoObjetivo;
+        [SerializeField] PlayerHUD hudJugador1;
+        [SerializeField] PlayerHUD hudJugador2;
         [SerializeField] UnityEvent<int> puntuacionActualizada;
         [SerializeField] UnityEvent uiRefrescada;
 
@@ -49,13 +52,22 @@ namespace RiftDeck.Combate
             try
             {
                 int jugador = partida.JugadorActivo;
-                int puntos = motor.CalcularPuntos(vista.Carta, resistenciasObjetivo);
-                jugadores[jugador - 1].AgregarCarta(vista.Carta);
-                jugadores[jugador - 1].UsarCarta(vista.Carta);
+                ResistenciasData resistencias = resistenciasObjetivo;
+                if (enemigoObjetivo != null)
+                    resistencias = ResistenciasData.DesdeEnemigo(enemigoObjetivo);
+
+                if (resistencias == null)
+                    throw new InvalidOperationException("Falta asignar las resistencias del objetivo.");
+
+                int puntos = motor.CalcularPuntos(vista.Carta, resistencias);
+                if (enemigoObjetivo != null)
+                    Destroy(resistencias);
                 jugadores[jugador - 1].AgregarPuntos(puntos);
                 partida.SumarPuntos(jugador, puntos);
-                puntuacionActualizada?.Invoke(puntos);
-                manoCartas.MoverAZona(vista);
+                ActualizarHud(partida, jugador);
+                puntuacionActualizada?.Invoke(partida.ObtenerPuntosTotales(jugador));
+                if (!manoCartas.EnZona(vista))
+                    manoCartas.MoverAZona(vista);
                 StartCoroutine(controladorTurnos.CambiarTurno(
                     $"Jugador {jugador} jugó una carta",
                     () => uiRefrescada?.Invoke()));
@@ -68,6 +80,14 @@ namespace RiftDeck.Combate
             {
                 Debug.LogError($"ControladorCombate: configuración de combate inválida. {excepcion.Message}");
             }
+        }
+
+        void ActualizarHud(GestorPartida partida, int jugadorActivo)
+        {
+            if (hudJugador1 != null)
+                hudJugador1.Mostrar(1, 0, partida.ObtenerPuntosTotales(1), jugadorActivo == 1);
+            if (hudJugador2 != null)
+                hudJugador2.Mostrar(2, 0, partida.ObtenerPuntosTotales(2), jugadorActivo == 2);
         }
     }
 }
