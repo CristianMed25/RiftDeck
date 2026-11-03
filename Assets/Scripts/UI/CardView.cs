@@ -151,8 +151,8 @@ namespace RiftDeck.UI
         public void BindCarta(CartaSO carta, TiposDano tipos)
         {
             if (carta == null) throw new System.ArgumentNullException(nameof(carta));
-            Bind(new DatosCarta(carta.nombreCarta, 0, carta.valorBase, carta.tipoDano.ToString()),
-                tipos, carta.spriteIlustracion, null, null, false, false);
+            Bind(new DatosCarta(carta.nombreCarta, carta.costo, carta.valorBase, carta.tipoDano.ToString()),
+                tipos, carta.spriteIlustracion, null, null, true, false);
             LiberarCartaGenerada();
             Carta = carta;
         }
@@ -171,6 +171,7 @@ namespace RiftDeck.UI
             var carta = ScriptableObject.CreateInstance<CartaSO>();
             carta.id = datos.nombre;
             carta.nombreCarta = datos.nombre;
+            carta.costo = datos.costo;
             carta.valorBase = datos.dano;
             carta.tipoDano = ConvertirTipoDano(datos.tipo);
             carta.spriteIlustracion = datos.spriteIlustracion;
@@ -212,7 +213,7 @@ namespace RiftDeck.UI
             var rt = (RectTransform)costo.transform.parent;
             if (rt.TryGetComponent<UnityEngine.UI.Image>(out var gema)) gema.enabled = !enAnillo;
             rt.anchoredPosition = enAnillo ? new Vector2(-1, 0) : posicionCosto;
-            costo.gameObject.SetActive(cifrasCosto == null);
+            costo.gameObject.SetActive(!UsaCifrasPixel());
             if (enAnillo) rt.gameObject.SetActive(true);
         }
 
@@ -220,11 +221,18 @@ namespace RiftDeck.UI
         {
             int actual = Costo;
             var color = actual > Datos.costo ? PaletaUI.Rojo : actual < Datos.costo ? PaletaUI.Menta : Color.white;
-            if (cifrasCosto != null) cifrasCosto.Mostrar(actual, color, costoEnAnillo ? cifrasChicas : cifrasGrandes);
+            if (UsaCifrasPixel())
+                cifrasCosto.Mostrar(actual, color, costoEnAnillo ? cifrasChicas : cifrasGrandes);
             if (costo.transform.parent.TryGetComponent<UnityEngine.UI.Image>(out var gema))
                 gema.color = actual != Datos.costo ? PaletaUI.Noche : colorGema;
             costo.text = actual.ToString();
             costo.color = color;
+        }
+
+        bool UsaCifrasPixel()
+        {
+            Sprite[] cifras = costoEnAnillo ? cifrasChicas : cifrasGrandes;
+            return cifrasCosto != null && cifras != null && cifras.Length >= 10;
         }
 
         public IEnumerator RecibirEstado(DatosEstado estado, Sprite[] cuadros)

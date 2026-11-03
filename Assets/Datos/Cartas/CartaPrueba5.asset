@@ -9,6 +9,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.Combate.CartaSO
   m_Script: {fileID: 11500000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f003, type: 3}
   id: prueba-5
+  costo: 4
   nombreCarta: Llama de prueba
   valorBase: 18
   tipoDano: 3

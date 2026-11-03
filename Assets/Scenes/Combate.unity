@@ -17268,9 +17268,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6e5aeaa5702478244a70fd1773d990d6, type: 2}
   - {fileID: 11400000, guid: d4210bcce55f0d94a95200f726a26306, type: 2}
   panelEnemigo: {fileID: 2060359270}
+  efectosAtaque: {fileID: 11400000, guid: 3163a4982b542a5458d418143bd3996e, type: 2}
   tiposDano: {fileID: 11400000, guid: 04c1dfec181400c40a2e5d12a3b8f08c, type: 2}
   hudJugador1: {fileID: 1128806870}
   hudJugador2: {fileID: 1354407901}
+  barraMana: {fileID: 710341526}
+  mazoInicializador: {fileID: 2000000001}
+  manaMaximo: 6
+  tamanoMano: 5
+  vidaMaximaEnemigo: 1500
   botonJugar: {fileID: 1602848713}
   botonSaltarTurno: {fileID: 715767787}
   textoAviso: {fileID: 1251098603}

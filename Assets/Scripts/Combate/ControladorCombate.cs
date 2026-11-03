@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,9 +22,15 @@ namespace RiftDeck.Combate
         [SerializeField] DatosEnemigo enemigoObjetivo;
         [SerializeField] DatosEnemigo[] catalogoEnemigos;
         [SerializeField] EnemyPanel panelEnemigo;
+        [SerializeField] CartasEspeciales efectosAtaque;
         [SerializeField] TiposDano tiposDano;
         [SerializeField] PlayerHUD hudJugador1;
         [SerializeField] PlayerHUD hudJugador2;
+        [SerializeField] ManaBar barraMana;
+        [SerializeField] MazoInicializador mazoInicializador;
+        [SerializeField, Min(1)] int manaMaximo = 6;
+        [SerializeField, Min(1)] int tamanoMano = 5;
+        [SerializeField, Min(1)] int vidaMaximaEnemigo = 1500;
         [SerializeField] UnityEngine.UI.Button botonJugar;
         [SerializeField] UnityEngine.UI.Button botonSaltarTurno;
         [SerializeField] TMP_Text textoAviso;
@@ -36,8 +43,10 @@ namespace RiftDeck.Combate
         [SerializeField] UnityEvent uiRefrescada;
 
         readonly JugadorModel[] jugadores = { new JugadorModel(1), new JugadorModel(2) };
+        readonly int[] manaActual = new int[2];
         readonly CombatEngine motor = new CombatEngine();
         Coroutine avisoEnCurso;
+        int vidaEnemigoActual;
 
         void Awake()
         {
@@ -58,8 +67,18 @@ namespace RiftDeck.Combate
         void Start()
         {
             enemigoObjetivo = SeleccionarEnemigo();
+            vidaMaximaEnemigo = enemigoObjetivo != null ? Mathf.Max(1, enemigoObjetivo.vida) : vidaMaximaEnemigo;
+            vidaEnemigoActual = vidaMaximaEnemigo;
+            manaActual[0] = manaActual[1] = manaMaximo;
             if (panelEnemigo != null && enemigoObjetivo != null && tiposDano != null)
+            {
+                panelEnemigo.Efectos = efectosAtaque;
                 panelEnemigo.Mostrar(enemigoObjetivo, tiposDano);
+                panelEnemigo.MostrarVida(vidaEnemigoActual, vidaMaximaEnemigo);
+            }
+            RobarYPrepararTurno();
+            ActualizarMana();
+            ActualizarHud(controladorTurnos != null ? controladorTurnos.Partida : null, 1);
             ActualizarRonda();
         }
 
@@ -89,6 +108,7 @@ namespace RiftDeck.Combate
         void OnEnable()
         {
             if (manoCartas != null) manoCartas.PidioElegir += AlElegirCarta;
+            if (manoCartas != null) manoCartas.PidioDevolver += AlDevolverCarta;
             if (botonJugar != null) botonJugar.onClick.AddListener(AlJugar);
             if (botonSaltarTurno != null) botonSaltarTurno.onClick.AddListener(SaltarTurno);
         }
@@ -96,6 +116,7 @@ namespace RiftDeck.Combate
         void OnDisable()
         {
             if (manoCartas != null) manoCartas.PidioElegir -= AlElegirCarta;
+            if (manoCartas != null) manoCartas.PidioDevolver -= AlDevolverCarta;
             if (botonJugar != null) botonJugar.onClick.RemoveListener(AlJugar);
             if (botonSaltarTurno != null) botonSaltarTurno.onClick.RemoveListener(SaltarTurno);
         }
@@ -109,7 +130,22 @@ namespace RiftDeck.Combate
             }
 
             if (!manoCartas.EnZona(vista))
+            {
                 manoCartas.MoverAZona(vista);
+                if (CostoZona() > manaActual[JugadorActivo() - 1])
+                {
+                    manoCartas.MoverAMano(vista);
+                    MostrarAviso("¡No tienes suficiente maná!");
+                }
+                ActualizarMana();
+            }
+        }
+
+        void AlDevolverCarta(CardView vista)
+        {
+            if (vista == null || !manoCartas.EnZona(vista)) return;
+            manoCartas.MoverAMano(vista);
+            ActualizarMana();
         }
 
         public void AlJugar()
@@ -132,6 +168,12 @@ namespace RiftDeck.Combate
             try
             {
                 int jugador = partida.JugadorActivo;
+                int costoTotal = CostoZona();
+                if (costoTotal > manaActual[jugador - 1])
+                {
+                    MostrarAviso("¡No tienes suficiente maná!");
+                    return;
+                }
                 int puntosTotales = 0;
                 foreach (var carta in cartas)
                 {
@@ -155,16 +197,29 @@ namespace RiftDeck.Combate
 
                 jugadores[jugador - 1].AgregarPuntos(puntosTotales);
                 partida.SumarPuntos(jugador, puntosTotales);
+                manaActual[jugador - 1] -= costoTotal;
+                vidaEnemigoActual = Mathf.Max(0, vidaEnemigoActual - puntosTotales);
+                if (panelEnemigo != null)
+                {
+                    panelEnemigo.MostrarVida(vidaEnemigoActual, vidaMaximaEnemigo);
+                    panelEnemigo.RecibirGolpe(
+                        puntosTotales,
+                        PaletaUI.Rojo,
+                        false,
+                        ObtenerEfectoAtaque(cartas[0].Carta.tipoDano));
+                }
                 ActualizarHud(partida, jugador);
+                ActualizarMana();
                 puntuacionActualizada?.Invoke(partida.ObtenerPuntosTotales(jugador));
-                StartCoroutine(controladorTurnos.CambiarTurno(
-                    $"Jugador {jugador} jugó {cartas.Count} carta(s)",
-                    () =>
-                    {
-                        ActualizarDespuesDeTurno(partida);
-                        uiRefrescada?.Invoke();
-                    }));
+                manoCartas.DescartarZona();
+                StartCoroutine(EsperarGolpeYCambiarTurno(
+                    partida,
+                    jugador,
+                    cartas.Count,
+                    puntosTotales,
+                    ObtenerEfectoAtaque(cartas[0].Carta.tipoDano)));
             }
+
             catch (ArgumentException excepcion)
             {
                 Debug.LogError($"ControladorCombate: no se pudo resolver la jugada. {excepcion.Message}");
@@ -173,6 +228,26 @@ namespace RiftDeck.Combate
             {
                 Debug.LogError($"ControladorCombate: configuración de combate inválida. {excepcion.Message}");
             }
+        }
+
+        IEnumerator EsperarGolpeYCambiarTurno(
+            GestorPartida partida,
+            int jugador,
+            int cantidadCartas,
+            int dano,
+            EnemyPanel.Efecto efecto)
+        {
+            if (panelEnemigo != null)
+                yield return panelEnemigo.EsperarFinGolpe(dano, false, efecto);
+
+            yield return controladorTurnos.CambiarTurno(
+                $"Jugador {jugador} jugó {cantidadCartas} carta(s)",
+                () =>
+                {
+                    ActualizarDespuesDeTurno(partida);
+                    uiRefrescada?.Invoke();
+                },
+                RobarYPrepararTurno);
         }
 
         public void SaltarTurno()
@@ -184,8 +259,7 @@ namespace RiftDeck.Combate
                 return;
             }
 
-            foreach (var carta in manoCartas.CartasEnZona())
-                manoCartas.MoverAMano(carta);
+            manoCartas.DescartarZona();
 
             StartCoroutine(controladorTurnos.CambiarTurno(
                 $"Jugador {partida.JugadorActivo} pasó el turno",
@@ -193,7 +267,8 @@ namespace RiftDeck.Combate
                 {
                     ActualizarDespuesDeTurno(partida);
                     uiRefrescada?.Invoke();
-                }));
+                },
+                RobarYPrepararTurno));
         }
 
         void MostrarAviso(string mensaje)
@@ -232,6 +307,7 @@ namespace RiftDeck.Combate
 
         void ActualizarHud(GestorPartida partida, int jugadorActivo)
         {
+            if (partida == null) return;
             if (hudJugador1 != null)
                 hudJugador1.Mostrar(1, vidaJugador1, partida.ObtenerPuntosTotales(1), jugadorActivo == 1);
             if (hudJugador2 != null)
@@ -240,7 +316,12 @@ namespace RiftDeck.Combate
 
         void ActualizarDespuesDeTurno(GestorPartida partida)
         {
+            if (!partida.PartidaTerminada)
+            {
+                manaActual[partida.JugadorActivo - 1] = manaMaximo;
+            }
             ActualizarHud(partida, partida.JugadorActivo);
+            ActualizarMana();
             ActualizarRonda();
 
             if (!partida.PartidaTerminada)
@@ -265,6 +346,53 @@ namespace RiftDeck.Combate
 
             GestorPartida partida = controladorTurnos.Partida;
             textoRonda.text = $"RONDA {partida.RondaActual}/{GestorPartida.RondasTotales}";
+        }
+
+        int JugadorActivo()
+        {
+            return controladorTurnos != null && controladorTurnos.Partida != null
+                ? controladorTurnos.Partida.JugadorActivo
+                : 1;
+        }
+
+        int CostoZona()
+        {
+            int total = 0;
+            foreach (var carta in manoCartas.CartasEnZona())
+                if (carta != null) total += carta.Costo;
+            return total;
+        }
+
+        void RobarYPrepararTurno()
+        {
+            if (manoCartas == null) return;
+            manoCartas.DescartarMano();
+            if (mazoInicializador != null)
+                mazoInicializador.RobarHasta(tamanoMano);
+        }
+
+        static EnemyPanel.Efecto ObtenerEfectoAtaque(TipoDano tipo)
+        {
+            switch (tipo)
+            {
+                case TipoDano.Cortante:
+                    return EnemyPanel.Efecto.Fuego;
+                case TipoDano.Perforante:
+                    return EnemyPanel.Efecto.Bala;
+                case TipoDano.Impacto:
+                    return EnemyPanel.Efecto.ExplosionGrande;
+                case TipoDano.Elemental:
+                    return EnemyPanel.Efecto.Rayo;
+                default:
+                    return EnemyPanel.Efecto.Ninguno;
+            }
+        }
+
+        void ActualizarMana()
+        {
+            if (barraMana == null) return;
+            int activo = JugadorActivo();
+            barraMana.Mostrar(manaActual[activo - 1], manaMaximo, 0, CostoZona());
         }
     }
 }

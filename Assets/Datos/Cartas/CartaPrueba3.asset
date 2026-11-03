@@ -10,6 +10,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.Combate.CartaSO
   m_Script: {fileID: 11500000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f003, type: 3}
   id: prueba-3
+  costo: 3
   nombreCarta: Rayo de prueba
   valorBase: 14
   tipoDano: 2

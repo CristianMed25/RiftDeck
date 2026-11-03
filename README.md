@@ -1,5 +1,30 @@
 # RiftDeck
 
+## Estado actual de `CombatSistem`
+
+La rama `CombatSistem` contiene actualmente el ciclo funcional de combate
+integrado con la UI y el flujo local de dos jugadores:
+
+- `CombatEngine` es un servicio C# puro que calcula el daño con
+  `valorBase * multiplicadorResistencia`, redondeado a entero.
+- `ControladorCombate` conecta selección, maná, daño, puntuación, vida del
+  enemigo, descarte, robo, HUD y cambio de turno.
+- Cada turno dispone de **6 puntos de maná**. El costo se muestra en cada carta,
+  se valida al moverla a la zona de juego y se descuenta al pulsar `JUGAR`.
+- `MazoInicializador` mantiene un mazo dinámico y roba hasta completar **5
+  cartas**. Las cartas se reparten desde el mazo con su dorso cosmético.
+- `EnemyPanel` actualiza la vida y reproduce el efecto de ataque según el tipo
+  de daño: fuego, bala, explosión o rayo.
+- El cambio de turno espera la animación completa del golpe. Después de que el
+  jugador receptor pulsa **ESTOY LISTO**, se prepara su mano y comienza el
+  reparto animado.
+- La escena `Combate` tiene asignados `ControladorCombate`, `MazoInicializador`,
+  `EnemyPanel`, `ManaBar`, `ControladorTurnos` y `CartasEspeciales`.
+
+La validación realizada fuera del Editor de Unity cubre estructura C# y
+`git diff --check`. La comprobación final pendiente es ejecutar la escena en
+Unity Play Mode y confirmar las referencias serializadas en el Inspector.
+
 ## Sistema de combate
 
 La rama `CombatSistem` incorpora el combate sobre los contratos existentes:
@@ -63,7 +88,8 @@ Hoy el combate lo mueve **`CombateFalso`** (`Assets/Scripts/UI/CombateFalso.cs` 
 - **Fórmula del daño:** `Puntos(DatosCarta)` (hoy: daño × resistencia × 10 × bonos × estados del enemigo) y `DanoJugada(...)` en `CombateFalso.Prismaticos.cs` (combos de hechizos, armas y póker).
 - **Costo:** se paga **`CardView.Costo`** (el de la carta más sus estados), no `DatosCarta.costo`. El número del costo **no** va pintado en el arte: lo dibuja `NumeroPixel` con los sprites de `Art/UI/Cifras/` (salen de `tools/cifras.py`). Si un estado lo sube, se ve en rojo sobre la gema oscura; si lo baja, en menta.
 - **Texto del detalle:** `Describir(CardView)` arma lo que sale al pararse sobre una carta. Lo pide el delegado `ManoCartas.Descripcion`.
-- **Maná (estilo Legends of Runeterra):** en el turno N hay N de maná (tope 10) y lo que sobra pasa a 3 huecos de reserva. Se muestra con `ManaBar.Mostrar(mana, maxTurno, reserva, costoElegido)`.
+- **Maná:** la integración actual usa 6 puntos por turno, sin reserva. Se
+  muestra con `ManaBar.Mostrar(mana, maxTurno, reserva, costoElegido)`.
 
 ### 3. Lo que tu código puede llamar para que se vea
 | Llamada | Qué se ve |
@@ -109,8 +135,10 @@ serializadas de Unity. El enemigo inicial es `Assets/Datos/Enemigos/Caballero.as
 sus cuadros de animación están referenciados desde `Assets/Art/Terceros/Enemigos/`.
 No se usan rutas `Resources.Load` ni cadenas `Assets/...` en tiempo de ejecución.
 
-`MazoInicializador` reparte esas cinco cartas solo si la mano está vacía.
-`ControladorCombate` inicializa `EnemyPanel` con el `DatosEnemigo` asignado.
+`MazoInicializador` prepara un mazo dinámico y reparte esas cinco cartas cuando
+la mano está vacía o cuando recibe el dispositivo el siguiente jugador.
+`ControladorCombate` inicializa `EnemyPanel` con el `DatosEnemigo` asignado y
+espera la confirmación de **ESTOY LISTO** antes de robar.
 Para sustituirlos, cambia las referencias en Inspector; no muevas sprites a
 `Assets/Art/Cartas` o `Assets/Art/Enemigos`.
 

@@ -152,6 +152,27 @@ namespace RiftDeck.UI
             carta.SetEnZona(false);
         }
 
+        /// <summary>Destruye las cartas jugadas y las retira de la mano visual.</summary>
+        public void DescartarZona()
+        {
+            foreach (var carta in CartasEnZona())
+                Descartar(carta);
+        }
+
+        /// <summary>Limpia la mano visual al cambiar de jugador.</summary>
+        public void DescartarMano()
+        {
+            foreach (var carta in CartasEnMano())
+                Descartar(carta);
+        }
+
+        void Descartar(CardView carta)
+        {
+            if (carta == null) return;
+            carta.transform.SetParent(null, false);
+            Destroy(carta.gameObject);
+        }
+
         void Mover(CardView carta, RectTransform destino, int indice)
         {
             var antes = carta.Visual.position;

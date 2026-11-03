@@ -7,6 +7,7 @@ namespace RiftDeck.Combate
     {
         public string id;
         public string nombreCarta;
+        [Min(0)] public int costo = 1;
         public int valorBase;
         public TipoDano tipoDano;
         public Sprite spriteIlustracion;

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using RiftDeck.UI;
 using System;
+using System.Collections.Generic;
 
 namespace RiftDeck.Combate
 {
@@ -22,6 +23,8 @@ namespace RiftDeck.Combate
         [SerializeField] Image imagenReversoMazo;
         [SerializeField] DatosCosmetico[] dorsos;
         [SerializeField] Sprite reversoPorDefecto;
+        readonly List<CartaSO> mazo = new List<CartaSO>();
+        System.Random generador;
 
         void Start()
         {
@@ -32,31 +35,50 @@ namespace RiftDeck.Combate
             }
 
             ConfigurarVisualMazo();
+            PrepararMazo();
 
             if (manoCartas.CartasEnMano().Count > 0)
                 return;
 
-            CartaSO[] cartas = ObtenerCartasDeLaPartida();
-            int repartidas = 0;
-            foreach (var datos in cartas)
+            int repartidas = RobarHasta(cartasPorMano);
+            if (repartidas == 0)
+                Debug.LogError("MazoInicializador: no se pudo repartir ninguna carta inicial.", this);
+        }
+
+        void PrepararMazo()
+        {
+            mazo.Clear();
+            var cartas = catalogoCartas != null && catalogoCartas.Length > 0
+                ? catalogoCartas
+                : cartasIniciales;
+            for (int i = 0; i < 8; i++)
+                foreach (var carta in cartas)
+                    if (carta != null) mazo.Add(carta);
+
+            generador = new System.Random(ModoPartida.Semilla == 0
+                ? Environment.TickCount
+                : ModoPartida.Semilla);
+        }
+
+        /// <summary>Roba cartas hasta completar el tamaño solicitado de la mano.</summary>
+        public int RobarHasta(int cantidad)
+        {
+            if (manoCartas == null || prefabCarta == null || tiposDano == null) return 0;
+            int robadas = 0;
+            while (manoCartas.CartasEnMano().Count < cantidad && mazo.Count > 0)
             {
-                if (datos == null)
-                {
-                    Debug.LogWarning("MazoInicializador: hay una carta inicial sin asignar.", this);
-                    continue;
-                }
-
-                if (!datos.TieneIlustracion)
-                    Debug.LogWarning($"MazoInicializador: '{datos.nombreCarta}' no tiene sprite.", this);
-
+                int indice = generador.Next(mazo.Count);
+                var datos = mazo[indice];
+                mazo.RemoveAt(indice);
                 var carta = Instantiate(prefabCarta);
                 carta.BindCarta(datos, tiposDano);
                 manoCartas.Agregar(carta);
-                repartidas++;
+                robadas++;
             }
 
-            if (repartidas == 0)
-                Debug.LogError("MazoInicializador: no se pudo repartir ninguna carta inicial.", this);
+            if (imagenReversoMazo != null)
+                imagenReversoMazo.gameObject.SetActive(mazo.Count > 0);
+            return robadas;
         }
 
         void ConfigurarVisualMazo()

@@ -285,13 +285,44 @@ namespace RiftDeck.UI
         /// <summary>El enemigo recibe una jugada de un solo golpe.</summary>
         public void RecibirGolpe(int dano, Color color, bool bloqueado)
         {
+            RecibirGolpe(dano, color, bloqueado, Efecto.Ninguno);
+        }
+
+        /// <summary>Reproduce el golpe con el efecto visual correspondiente al ataque.</summary>
+        public void RecibirGolpe(int dano, Color color, bool bloqueado, Efecto efecto)
+        {
             if (bloqueado)
             {
                 animacion.Reproducir("bloqueo");
                 if (numeroFlotante != null) StartCoroutine(Flotar("Bloqueado", PaletaUI.Suave, 0, NumeroCentro(), DireccionAlAzar()));
                 return;
             }
-            Impacto(dano, color, null, Efecto.Ninguno);
+            Impacto(dano, color, null, efecto);
+        }
+
+        /// <summary>
+        /// Espera a que termine el golpe que ya fue iniciado por <see cref="RecibirGolpe"/>.
+        /// </summary>
+        public IEnumerator EsperarFinGolpe(int dano, bool bloqueado, Efecto efecto)
+        {
+            float duracion = DuracionGolpe(dano, bloqueado);
+            if (!bloqueado && efecto != Efecto.Ninguno)
+                duracion += 1f;
+            yield return new WaitForSecondsRealtime(duracion);
+        }
+
+        float DuracionGolpe(int dano, bool bloqueado)
+        {
+            float duracionAnimacion = animacion != null ? animacion.Duracion("golpe") : 0f;
+            if (bloqueado)
+                return Mathf.Max(duracionAnimacion, 0.5f);
+
+            float pausa = dano >= GolpeMedio ? 0.4f : 0.25f;
+            const float entrada = 0.24f;
+            const float destello = 0.06f;
+            const float salida = 0.3f;
+            const float margen = 0.1f;
+            return Mathf.Max(duracionAnimacion, entrada + destello + pausa + salida + margen);
         }
 
         /// <summary>

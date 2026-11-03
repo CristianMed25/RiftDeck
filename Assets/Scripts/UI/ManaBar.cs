@@ -11,7 +11,7 @@ namespace RiftDeck.UI
     /// </summary>
     public class ManaBar : MonoBehaviour
     {
-        public const int MaxMana = 10;
+        public const int MaxMana = 6;
         public const int MaxReserva = 3;
 
         static readonly Color Bloqueada = new Color(0.106f, 0.063f, 0.2f, 0.6f);

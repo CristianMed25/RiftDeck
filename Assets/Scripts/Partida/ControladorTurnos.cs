@@ -37,7 +37,10 @@ namespace RiftDeck.Partida
         /// </summary>
         /// <param name="texto">Motivo que se muestra arriba (p. ej. "El enemigo actúa · turno de").</param>
         /// <param name="alCambiar">Opcional: lo ejecuta el combate una vez cambiado el turno.</param>
-        public IEnumerator CambiarTurno(string texto, Action alCambiar = null)
+        public IEnumerator CambiarTurno(
+            string texto,
+            Action alCambiar = null,
+            Action despuesDeListo = null)
         {
             if (!PuedeCambiarTurno()) yield break;
             cambiandoTurno = true;
@@ -55,6 +58,7 @@ namespace RiftDeck.Partida
                     alCambiar?.Invoke();
                 });
 
+            despuesDeListo?.Invoke();
             cambiandoTurno = false;
         }
 
