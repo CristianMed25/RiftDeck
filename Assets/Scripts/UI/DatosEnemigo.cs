@@ -43,7 +43,7 @@ namespace RiftDeck.UI
 
         public float Multiplicador(string tipo)
         {
-            var r = resistencias != null ? resistencias.Find(x => x != null && x.tipo == tipo) : null;
+            var r = resistencias != null ? resistencias.Find(x => x != null && string.Equals(x.tipo, tipo, StringComparison.OrdinalIgnoreCase)) : null;
             return r != null ? r.multiplicador : 1f;
         }
 

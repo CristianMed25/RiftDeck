@@ -23,6 +23,6 @@ namespace RiftDeck.UI
 
         public List<Tipo> tipos = new List<Tipo>();
 
-        public Tipo Buscar(string id) => tipos.Find(t => t.id == id);
+        public Tipo Buscar(string id) => tipos.Find(t => string.Equals(t.id, id, StringComparison.OrdinalIgnoreCase));
     }
 }
