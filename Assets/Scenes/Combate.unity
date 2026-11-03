@@ -17213,12 +17213,28 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f013, type: 2}
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f014, type: 2}
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f015, type: 2}
+  - {fileID: 11400000, guid: 9334d12afcba02e074ff193bc53d7adf, type: 2}
+  - {fileID: 11400000, guid: 9d9a3d742ec958a9cf332aeaaabe2673, type: 2}
+  - {fileID: 11400000, guid: b3d8135ad22d2ddb008e33b148de99a2, type: 2}
+  - {fileID: 11400000, guid: 0e0781e957cc786c373cc5dbe853c253, type: 2}
+  - {fileID: 11400000, guid: f61834d5ff5515fd16337e81c4920a58, type: 2}
+  - {fileID: 11400000, guid: 77d2821d0c5b9734401c26111a862a20, type: 2}
+  - {fileID: 11400000, guid: 1d31636cb21645124ea8ca3263293755, type: 2}
+  - {fileID: 11400000, guid: e9376d8d9bfc746fab602495a6c13304, type: 2}
   catalogoCartas:
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f011, type: 2}
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f012, type: 2}
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f013, type: 2}
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f014, type: 2}
   - {fileID: 11400000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f015, type: 2}
+  - {fileID: 11400000, guid: 9334d12afcba02e074ff193bc53d7adf, type: 2}
+  - {fileID: 11400000, guid: 9d9a3d742ec958a9cf332aeaaabe2673, type: 2}
+  - {fileID: 11400000, guid: b3d8135ad22d2ddb008e33b148de99a2, type: 2}
+  - {fileID: 11400000, guid: 0e0781e957cc786c373cc5dbe853c253, type: 2}
+  - {fileID: 11400000, guid: f61834d5ff5515fd16337e81c4920a58, type: 2}
+  - {fileID: 11400000, guid: 77d2821d0c5b9734401c26111a862a20, type: 2}
+  - {fileID: 11400000, guid: 1d31636cb21645124ea8ca3263293755, type: 2}
+  - {fileID: 11400000, guid: e9376d8d9bfc746fab602495a6c13304, type: 2}
   usarCatalogoParaLaMano: 1
   cartasPorMano: 5
   imagenReversoMazo: {fileID: 2074313312}

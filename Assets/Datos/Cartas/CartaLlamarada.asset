@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: CartaLlamarada
+  m_EditorClassIdentifier: Assembly-CSharp::RiftDeck.Combate.CartaSO
+  m_Script: {fileID: 11500000, guid: 6d7f0f9f8d7a4d5ba1a5d7b6c8e9f003, type: 3}
+  id: llamarada
+  nombreCarta: Llamarada
+  costo: 1
+  valorBase: 11
+  tipoDano: 3
+  spriteIlustracion: {fileID: 21300000, guid: 563248e8e5b980d48b93ee78f304cf60, type: 3}
