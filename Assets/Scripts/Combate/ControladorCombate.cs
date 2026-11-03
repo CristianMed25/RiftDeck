@@ -345,7 +345,7 @@ namespace RiftDeck.Combate
                 return;
 
             GestorPartida partida = controladorTurnos.Partida;
-            textoRonda.text = $"RONDA {partida.RondaActual}/{GestorPartida.RondasTotales}";
+            textoRonda.text = $"RONDA {partida.RondaActual}/{partida.RondasTotales}";
         }
 
         int JugadorActivo()

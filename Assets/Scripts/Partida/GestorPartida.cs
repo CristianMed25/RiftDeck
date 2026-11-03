@@ -12,21 +12,32 @@ namespace RiftDeck.Partida
     /// </summary>
     public class GestorPartida
     {
-        public const int RondasTotales = 4;
+        public const int RondasPorDefecto = 4;
 
         /// <summary>Puntuación de un jugador, una casilla por ronda. Nunca se expone el array.</summary>
         class EstadoJugador
         {
-            public readonly int[] puntosPorRonda = new int[RondasTotales];
+            public readonly int[] puntosPorRonda;
+            public EstadoJugador(int rondasTotales) => puntosPorRonda = new int[rondasTotales];
         }
 
-        readonly EstadoJugador[] jugadores = { new EstadoJugador(), new EstadoJugador() };
+        readonly EstadoJugador[] jugadores;
         readonly bool[] turnosCompletados = new bool[2];
 
+        public int RondasTotales { get; }
         public int JugadorActivo { get; private set; } = 1;
         public int RondaActual { get; private set; } = 1;
         public bool PartidaIniciada { get; private set; }
         public bool PartidaTerminada { get; private set; }
+
+        /// <summary>Cuántas rondas tiene esta partida (por defecto 4; la decide quien la crea, p. ej. según el modo elegido).</summary>
+        public GestorPartida(int rondasTotales = RondasPorDefecto)
+        {
+            if (rondasTotales < 1)
+                throw new ArgumentOutOfRangeException(nameof(rondasTotales), "Debe haber al menos 1 ronda.");
+            RondasTotales = rondasTotales;
+            jugadores = new[] { new EstadoJugador(rondasTotales), new EstadoJugador(rondasTotales) };
+        }
 
         /// <summary>Pone el estado en cero y empieza en el jugador 1, ronda 1.</summary>
         public void IniciarPartida()
@@ -134,7 +145,7 @@ namespace RiftDeck.Partida
                 throw new ArgumentOutOfRangeException(nameof(jugador), "El jugador debe ser 1 o 2.");
         }
 
-        static void ValidarRonda(int ronda)
+        void ValidarRonda(int ronda)
         {
             if (ronda < 1 || ronda > RondasTotales)
                 throw new ArgumentOutOfRangeException(nameof(ronda), $"La ronda debe estar entre 1 y {RondasTotales}.");

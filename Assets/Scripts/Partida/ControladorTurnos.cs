@@ -46,7 +46,7 @@ namespace RiftDeck.Partida
             cambiandoTurno = true;
 
             int recibe = partida.JugadorContrario(partida.JugadorActivo);
-            string ronda = $"RONDA {partida.RondaActual}/{GestorPartida.RondasTotales}";
+            string ronda = $"RONDA {partida.RondaActual}/{partida.RondasTotales}";
 
             yield return pasaDispositivo.Mostrar(texto, recibe,
                 partida.ObtenerPuntosTotales(1), partida.ObtenerPuntosTotales(2), ronda, () =>

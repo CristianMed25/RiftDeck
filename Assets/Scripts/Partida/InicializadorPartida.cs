@@ -22,7 +22,7 @@ namespace RiftDeck.Partida
         {
             if (!ReferenciasValidas()) return;
 
-            partida = new GestorPartida();
+            partida = new GestorPartida(RiftDeck.UI.ModoPartida.Rondas);
             partida.IniciarPartida();
 
             controladorTurnos.Inicializar(partida);
