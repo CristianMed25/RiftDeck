@@ -10,5 +10,7 @@ namespace RiftDeck.Combate
         public int valorBase;
         public TipoDano tipoDano;
         public Sprite spriteIlustracion;
+
+        public bool TieneIlustracion => spriteIlustracion != null;
     }
 }

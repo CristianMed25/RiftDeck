@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RiftDeck.UI
 {
@@ -24,10 +25,36 @@ namespace RiftDeck.UI
 
         RectTransform Rt => (RectTransform)transform;
 
-        void Awake() => Ocultar();
+        void Awake()
+        {
+            if (grupo == null)
+            {
+                Debug.LogError("DetalleCarta: falta asignar CanvasGroup.", this);
+                return;
+            }
+
+            DesactivarRaycastsEstados();
+            Ocultar();
+        }
+
+        void DesactivarRaycastsEstados()
+        {
+            if (cajaEstados == null) return;
+
+            foreach (var grafico in cajaEstados.GetComponentsInChildren<Graphic>(true))
+                grafico.raycastTarget = false;
+
+            var grupoEstados = cajaEstados.GetComponent<CanvasGroup>();
+            if (grupoEstados != null)
+            {
+                grupoEstados.interactable = false;
+                grupoEstados.blocksRaycasts = false;
+            }
+        }
 
         public void Mostrar(CardView carta, TiposDano tipos, string descripcion)
         {
+            if (grupo == null || carta == null || string.IsNullOrEmpty(carta.Datos.nombre)) return;
             var t = tipos != null ? tipos.Buscar(carta.Datos.tipo) : null;
             nombre.text = carta.Datos.nombre;
             tipo.text = t != null ? t.nombre : carta.Datos.tipo;
@@ -44,9 +71,20 @@ namespace RiftDeck.UI
 
             Colocar(carta);
             grupo.alpha = 1;
+            // El detalle es informativo; nunca debe interceptar el arrastre de la mano.
+            grupo.interactable = false;
+            grupo.blocksRaycasts = false;
         }
 
-        public void Ocultar() => grupo.alpha = 0;
+        public void Ocultar()
+        {
+            if (grupo == null) return;
+            grupo.alpha = 0;
+            grupo.interactable = false;
+            grupo.blocksRaycasts = false;
+            if (cajaEstados != null)
+                cajaEstados.gameObject.SetActive(false);
+        }
 
         void MostrarEstados(CardView carta)
         {

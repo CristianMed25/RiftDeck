@@ -43,8 +43,13 @@ namespace RiftDeck.UI
 
         public float Multiplicador(string tipo)
         {
-            var r = resistencias.Find(x => x.tipo == tipo);
+            var r = resistencias != null ? resistencias.Find(x => x != null && x.tipo == tipo) : null;
             return r != null ? r.multiplicador : 1f;
         }
+
+        public bool TieneSpritePrincipal =>
+            clips != null && clips.Length > 0 &&
+            clips[0] != null && clips[0].cuadros != null &&
+            clips[0].cuadros.Length > 0 && clips[0].cuadros[0] != null;
     }
 }

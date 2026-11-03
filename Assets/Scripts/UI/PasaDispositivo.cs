@@ -3,6 +3,7 @@ using System.Collections;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RiftDeck.UI
 {
@@ -34,7 +35,16 @@ namespace RiftDeck.UI
         void Awake()
         {
             listo.onClick.AddListener(() => listoPulsado = true);
+            DesactivarRaycastsDecorativos();
             Ocultar();
+        }
+
+        void DesactivarRaycastsDecorativos()
+        {
+            var boton = listo != null ? listo.targetGraphic : null;
+            foreach (var grafico in GetComponentsInChildren<Graphic>(true))
+                if (grafico != boton)
+                    grafico.raycastTarget = false;
         }
 
         void Ocultar()

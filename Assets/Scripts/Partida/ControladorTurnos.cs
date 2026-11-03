@@ -49,7 +49,9 @@ namespace RiftDeck.Partida
                 partida.ObtenerPuntosTotales(1), partida.ObtenerPuntosTotales(2), ronda, () =>
                 {
                     // ya con la pantalla tapada: así el jugador que entrega no ve el cambio
-                    partida.SiguienteTurno();
+                    partida.RegistrarTurnoCompletado(partida.JugadorActivo);
+                    if (!partida.PartidaTerminada)
+                        partida.SiguienteTurno();
                     alCambiar?.Invoke();
                 });
 

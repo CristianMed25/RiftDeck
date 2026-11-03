@@ -21,6 +21,7 @@ namespace RiftDeck.Partida
         }
 
         readonly EstadoJugador[] jugadores = { new EstadoJugador(), new EstadoJugador() };
+        readonly bool[] turnosCompletados = new bool[2];
 
         public int JugadorActivo { get; private set; } = 1;
         public int RondaActual { get; private set; } = 1;
@@ -33,6 +34,7 @@ namespace RiftDeck.Partida
             foreach (var j in jugadores) Array.Clear(j.puntosPorRonda, 0, j.puntosPorRonda.Length);
             JugadorActivo = 1;
             RondaActual = 1;
+            Array.Clear(turnosCompletados, 0, turnosCompletados.Length);
             PartidaTerminada = false;
             PartidaIniciada = true;
         }
@@ -52,6 +54,23 @@ namespace RiftDeck.Partida
         {
             RequerirPartidaActiva();
             JugadorActivo = JugadorContrario(JugadorActivo);
+        }
+
+        /// <summary>
+        /// Registra que el jugador activo terminó su turno. La ronda solo avanza cuando
+        /// ambos jugadores han terminado la ronda actual.
+        /// </summary>
+        public void RegistrarTurnoCompletado(int jugador)
+        {
+            ValidarJugador(jugador);
+            RequerirPartidaActiva();
+            turnosCompletados[jugador - 1] = true;
+
+            if (!turnosCompletados[0] || !turnosCompletados[1])
+                return;
+
+            Array.Clear(turnosCompletados, 0, turnosCompletados.Length);
+            AvanzarRonda();
         }
 
         /// <summary>Suma puntos al jugador indicado, en la ronda actual.</summary>
@@ -94,7 +113,12 @@ namespace RiftDeck.Partida
         public void AvanzarRonda()
         {
             RequerirPartidaActiva();
-            if (RondaActual >= RondasTotales) { PartidaTerminada = true; return; }
+            if (RondaActual == RondasTotales)
+            {
+                PartidaTerminada = true;
+                return;
+            }
+
             RondaActual++;
         }
 

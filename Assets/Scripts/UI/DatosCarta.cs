@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace RiftDeck.UI
 {
@@ -18,6 +19,7 @@ namespace RiftDeck.UI
         public int costo;
         public int dano;
         public string tipo;
+        public Sprite spriteIlustracion;
         /// <summary>0 si es una carta normal; 1 a 22 si es un arcano mayor (índice + 1).</summary>
         public int arcano;
         /// <summary>"" si es normal; si no, de qué aumento prismático viene (ver las constantes).</summary>
@@ -40,6 +42,7 @@ namespace RiftDeck.UI
             this.costo = costo;
             this.dano = dano;
             this.tipo = tipo;
+            spriteIlustracion = null;
             arcano = 0;
             especial = "";
             indice = 0;

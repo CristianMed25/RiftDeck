@@ -65,6 +65,17 @@ namespace RiftDeck.UI
 
         public void Mostrar(DatosEnemigo datos, TiposDano tipos)
         {
+            if (datos == null)
+            {
+                Debug.LogError("EnemyPanel: falta asignar DatosEnemigo.", this);
+                return;
+            }
+            if (!datos.TieneSpritePrincipal)
+            {
+                Debug.LogWarning($"EnemyPanel: '{datos.name}' no tiene cuadros de sprite en el primer clip.", this);
+                return;
+            }
+
             nombre.text = datos.nombre;
             (nivel.text, nivel.color) = datos.nivel switch
             {

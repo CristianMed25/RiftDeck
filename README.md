@@ -101,6 +101,19 @@ Inspector. Desactiva o elimina `CombateFalso` para evitar que ambos
 controladores respondan al mismo evento. Conecta `uiRefrescada` a la rutina que
 reparte la siguiente mano.
 
+### Assets de prueba del combate
+
+Las cinco cartas de arranque están en `Assets/Datos/Cartas/` y referencian
+sprites reales de `Assets/Art/Terceros/Cartas/Hechizos/` mediante referencias
+serializadas de Unity. El enemigo inicial es `Assets/Datos/Enemigos/Caballero.asset`;
+sus cuadros de animación están referenciados desde `Assets/Art/Terceros/Enemigos/`.
+No se usan rutas `Resources.Load` ni cadenas `Assets/...` en tiempo de ejecución.
+
+`MazoInicializador` reparte esas cinco cartas solo si la mano está vacía.
+`ControladorCombate` inicializa `EnemyPanel` con el `DatosEnemigo` asignado.
+Para sustituirlos, cambia las referencias en Inspector; no muevas sprites a
+`Assets/Art/Cartas` o `Assets/Art/Enemigos`.
+
 ## Efectos de estado (buffs y debuffs)
 
 Todos funcionan en el combate de prueba. Cada uno es un asset `DatosEstado` en `Assets/Datos/Estados/` con su ícono de Spire of Ash. Al pararse sobre el ícono del enemigo, o sobre una carta afectada, se ve qué hace y cuánto dura.

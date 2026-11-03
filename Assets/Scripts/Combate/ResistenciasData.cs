@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using RiftDeck.UI;
 
 namespace RiftDeck.Combate
 {
@@ -12,10 +11,16 @@ namespace RiftDeck.Combate
             1f, 1f, 1f, 1f
         };
 
+        void OnValidate()
+        {
+            NormalizarMultiplicadores();
+        }
+
         public float ObtenerMultiplicador(TipoDano tipo)
         {
+            NormalizarMultiplicadores();
             int indice = (int)tipo;
-            if (indice < 0 || indice >= multiplicadores.Length)
+            if (!Enum.IsDefined(typeof(TipoDano), tipo) || indice >= multiplicadores.Length)
                 throw new ArgumentOutOfRangeException(nameof(tipo), "El tipo de daño no tiene multiplicador.");
 
             float multiplicador = multiplicadores[indice];
@@ -26,19 +31,24 @@ namespace RiftDeck.Combate
 
         public void EstablecerMultiplicador(TipoDano tipo, float multiplicador)
         {
+            if (!Enum.IsDefined(typeof(TipoDano), tipo))
+                throw new ArgumentOutOfRangeException(nameof(tipo));
             if (multiplicador < 0f)
                 throw new ArgumentOutOfRangeException(nameof(multiplicador));
+            NormalizarMultiplicadores();
             multiplicadores[(int)tipo] = multiplicador;
         }
 
-        public static ResistenciasData DesdeEnemigo(DatosEnemigo enemigo)
+        void NormalizarMultiplicadores()
         {
-            if (enemigo == null) throw new ArgumentNullException(nameof(enemigo));
-
-            var datos = CreateInstance<ResistenciasData>();
-            foreach (TipoDano tipo in Enum.GetValues(typeof(TipoDano)))
-                datos.EstablecerMultiplicador(tipo, enemigo.Multiplicador(tipo.ToString()));
-            return datos;
+            int cantidadTipos = Enum.GetValues(typeof(TipoDano)).Length;
+            if (multiplicadores == null || multiplicadores.Length != cantidadTipos)
+            {
+                var anteriores = multiplicadores;
+                multiplicadores = new float[cantidadTipos];
+                for (int i = 0; i < multiplicadores.Length; i++)
+                    multiplicadores[i] = anteriores != null && i < anteriores.Length ? anteriores[i] : 1f;
+            }
         }
     }
 }

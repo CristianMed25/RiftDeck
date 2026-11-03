@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using RiftDeck.Combate;
 
 namespace RiftDeck.UI
@@ -13,18 +14,14 @@ namespace RiftDeck.UI
     /// que se mueve (inspeccionar, arrastrar, volar a la zona de jugada) es el hijo
     /// "Visual", que lleva su propio Canvas para dibujarse encima de las demás.
     /// Los toques se los pasa a <see cref="ManoCartas"/>, que decide qué hacer.
-    /// El costo se dibuja con sprites de cifras (<see cref="NumeroPixel"/>), no pintado en el
-    /// arte: si un estado lo cambia (Penitencia: +1), se ve al momento en rojo.
-    /// Animaciones tomadas del Deckbuilder Kit: al repartir sale boca abajo del mazo, vuela a
-    /// su hueco y se voltea; al ponerla en la zona viene hacia la cámara y baja a su lugar.
     /// </summary>
     public class CardView : MonoBehaviour,
         IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler,
-        IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+        IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler,
+        IPointerClickHandler
     {
         const int EscalaIcono = 2;
         const float Suavizado = 22f;
-        // 4/3 da 4 px de pantalla por píxel de arte a ×3: la carta grande sigue nítida
         const float EscalaInspeccion = 4f / 3f;
         const float SubidaInspeccion = 30f;
         const int OrdenInspeccion = 5;
@@ -32,7 +29,6 @@ namespace RiftDeck.UI
         const int OrdenPresentar = 12;
         const float EscalaReparto = 0.5f;
         const float DuracionVuelta = 0.25f;
-        // 2 = 6 px de pantalla por píxel de arte: grande y nítida frente a la cámara
         const float EscalaPresentar = 2f;
 
         [SerializeField] RectTransform visual;
@@ -61,14 +57,11 @@ namespace RiftDeck.UI
         public ManoCartas Mano { get; set; }
         public RectTransform Visual => visual;
         public RectTransform Raiz => (RectTransform)transform;
-        /// <summary>Posición en la mano, para volver al mismo lugar desde la zona de jugada.</summary>
         public int IndiceMano { get; set; }
 
         readonly List<DatosEstado> estados = new List<DatosEstado>();
-        /// <summary>Buffs y debuffs puestos en esta carta (no en las demás de la mano).</summary>
         public IReadOnlyList<DatosEstado> Estados => estados;
 
-        /// <summary>El costo con los estados de la carta: es el que se paga.</summary>
         public int Costo
         {
             get
@@ -81,7 +74,6 @@ namespace RiftDeck.UI
 
         Vector2 desplazamiento, desplazamientoObjetivo, agarre;
         float escala = 1f, escalaObjetivo = 1f;
-        // ancho relativo mientras se voltea (1 = de frente)
         float vuelta = 1f;
         bool inspeccionada, arrastrando, presentando;
         bool cartaGenerada;
@@ -91,15 +83,40 @@ namespace RiftDeck.UI
 
         void Awake()
         {
+            foreach (var grafico in GetComponentsInChildren<Graphic>(true))
+                grafico.raycastTarget = false;
+
+            if (costo == null || dano == null || visual == null || franja == null || icono == null ||
+                brillo == null || grupo == null || capa == null)
+            {
+                Debug.LogError("CardView: el prefab no tiene todos sus referencias visuales asignadas.", this);
+                return;
+            }
             var rt = (RectTransform)costo.transform.parent;
+            if (rt == null)
+            {
+                Debug.LogError("CardView: el contador de costo debe tener un padre RectTransform.", this);
+                return;
+            }
             posicionCosto = rt.anchoredPosition;
             if (rt.TryGetComponent<UnityEngine.UI.Image>(out var gema)) colorGema = gema.color;
+
+            if (!TryGetComponent<Graphic>(out var graficoRaiz))
+            {
+                var hitbox = gameObject.AddComponent<UnityEngine.UI.Image>();
+                hitbox.color = new Color(1f, 1f, 1f, 0f);
+                graficoRaiz = hitbox;
+            }
+
+            graficoRaiz.raycastTarget = true;
         }
 
-        /// <param name="arteCompleto">Arte que tapa la cara (arcanos y cartas especiales).</param>
-        /// <param name="marcoEspecial">Marco debajo del arte, opcional, con su material.</param>
-        /// <param name="conCosto">Deja a la vista el costo sobre el arte.</param>
-        /// <param name="conDano">Deja a la vista el daño sobre el arte.</param>
+        void Start()
+        {
+            if (Mano == null)
+                Debug.LogWarning("CardView: inició sin ManoCartas; la instancia no podrá seleccionar cartas.", this);
+        }
+
         public void Bind(DatosCarta datos, TiposDano tipos, Sprite arteCompleto = null, Sprite marcoEspecial = null,
             Material materialMarco = null, bool conCosto = false, bool conDano = false)
         {
@@ -107,7 +124,10 @@ namespace RiftDeck.UI
             LiberarCartaGenerada();
             Carta = CrearCartaDeUI(datos);
             cartaGenerada = true;
-            MostrarArte(arteCompleto, conCosto, conDano);
+            Sprite ilustracion = arteCompleto != null ? arteCompleto : datos.spriteIlustracion;
+            MostrarArte(ilustracion, conCosto, conDano);
+            if (ilustracion == null)
+                Debug.LogWarning($"CardView: la carta '{datos.nombre}' no tiene ilustración asignada.", this);
             MostrarMarco(arteCompleto != null ? marcoEspecial : null, materialMarco);
             estados.Clear();
             costo.text = datos.costo.ToString();
@@ -128,7 +148,6 @@ namespace RiftDeck.UI
             SetJugable(true);
         }
 
-        /// <summary>Asocia el dato de combate conservando el formato visual existente.</summary>
         public void BindCarta(CartaSO carta, TiposDano tipos)
         {
             if (carta == null) throw new System.ArgumentNullException(nameof(carta));
@@ -154,6 +173,7 @@ namespace RiftDeck.UI
             carta.nombreCarta = datos.nombre;
             carta.valorBase = datos.dano;
             carta.tipoDano = ConvertirTipoDano(datos.tipo);
+            carta.spriteIlustracion = datos.spriteIlustracion;
             return carta;
         }
 
@@ -164,10 +184,6 @@ namespace RiftDeck.UI
                 : TipoDano.Elemental;
         }
 
-        /// <summary>
-        /// Con arte (un arcano o una carta especial), la carta es esa imagen: se apagan el
-        /// ícono, la franja y, si no se piden, el costo y el daño.
-        /// </summary>
         void MostrarArte(Sprite sprite, bool conCosto, bool conDano)
         {
             bool hay = sprite != null && arte != null;
@@ -180,50 +196,37 @@ namespace RiftDeck.UI
             }
             if (visual.TryGetComponent<UnityEngine.UI.Image>(out var cara)) cara.enabled = !hay;
             if (arte == null) return;
-            // marco y arte van al fondo: el costo, el daño y el borde de la zona quedan encima
             arte.transform.SetSiblingIndex(0);
             if (marco != null) marco.transform.SetSiblingIndex(0);
             arte.gameObject.SetActive(hay);
             if (hay)
             {
                 arte.sprite = sprite;
-                // no SetNativeSize: el Canvas propio de la carta tiene otro Reference PPU
                 arte.rectTransform.sizeDelta = sprite.rect.size;
             }
         }
 
-        /// <summary>
-        /// Normal: la gema azul arriba a la izquierda con cifras grandes. Hechizos: sin gema,
-        /// cifras chicas dentro del anillo que trae el marco de Spire (centro en el píxel 7,7).
-        /// </summary>
         void ColocarCosto(bool enAnillo)
         {
             costoEnAnillo = enAnillo;
             var rt = (RectTransform)costo.transform.parent;
             if (rt.TryGetComponent<UnityEngine.UI.Image>(out var gema)) gema.enabled = !enAnillo;
             rt.anchoredPosition = enAnillo ? new Vector2(-1, 0) : posicionCosto;
-            // las cifras reemplazan al texto
             costo.gameObject.SetActive(cifrasCosto == null);
             if (enAnillo) rt.gameObject.SetActive(true);
         }
 
-        /// <summary>Blanco si es el de la carta, rojo si subió y menta si bajó.</summary>
         void MostrarCosto()
         {
             int actual = Costo;
             var color = actual > Datos.costo ? PaletaUI.Rojo : actual < Datos.costo ? PaletaUI.Menta : Color.white;
             if (cifrasCosto != null) cifrasCosto.Mostrar(actual, color, costoEnAnillo ? cifrasChicas : cifrasGrandes);
-            // el rojo y el menta no se leen sobre el azul: la gema se oscurece si el costo cambió
             if (costo.transform.parent.TryGetComponent<UnityEngine.UI.Image>(out var gema))
                 gema.color = actual != Datos.costo ? PaletaUI.Noche : colorGema;
             costo.text = actual.ToString();
             costo.color = color;
         }
 
-        /// <summary>
-        /// Un estado le cae a esta carta: el efecto se reproduce encima, a medio camino cambia
-        /// el costo y la cifra salta.
-        /// </summary>
         public IEnumerator RecibirEstado(DatosEstado estado, Sprite[] cuadros)
         {
             UnityEngine.UI.Image efecto = null;
@@ -247,7 +250,6 @@ namespace RiftDeck.UI
                     efecto.sprite = cuadros[i];
                     efecto.transform.SetAsLastSibling();
                 }
-                // destello del color del estado sobre la cara
                 if (cara != null && cara.enabled) cara.color = i % 4 < 2 ? Color.Lerp(Color.white, estado.Color, 0.5f) : Color.white;
                 if (i == total / 2)
                 {
@@ -261,7 +263,6 @@ namespace RiftDeck.UI
             if (efecto != null) Destroy(efecto.gameObject);
         }
 
-        /// <summary>Pone el estado sin animación (la carta vuelve a la mano ya marcada).</summary>
         public void PonerEstado(DatosEstado estado)
         {
             if (estado == null || estados.Contains(estado)) return;
@@ -269,7 +270,6 @@ namespace RiftDeck.UI
             MostrarCosto();
         }
 
-        /// <summary>Se le quitan los estados (el enemigo que los puso murió).</summary>
         public void QuitarEstados()
         {
             if (estados.Count == 0) return;
@@ -298,13 +298,9 @@ namespace RiftDeck.UI
             marco.rectTransform.sizeDelta = sprite.rect.size;
         }
 
-        /// <summary>En la zona de jugada lleva el borde Oro.</summary>
         public void SetEnZona(bool enZona) => brillo.enabled = enZona;
-
-        /// <summary>Apaga la carta cuando no alcanza el maná.</summary>
         public void SetJugable(bool jugable) => grupo.alpha = jugable ? 1f : 0.55f;
 
-        /// <summary>La carta sube, crece y se dibuja encima para leerla.</summary>
         public void SetInspeccion(bool activa)
         {
             inspeccionada = activa;
@@ -328,17 +324,12 @@ namespace RiftDeck.UI
             desplazamiento = desplazamientoObjetivo = PuntoLocal(e) - agarre;
         }
 
-        /// <summary>Al soltar vuelve sola a su hueco (o al nuevo, si cambió de lugar).</summary>
         public void TerminarArrastre()
         {
             arrastrando = false;
             SetInspeccion(false);
         }
 
-        /// <summary>
-        /// Después de cambiar de contenedor: arranca desde donde se veía antes y vuela a
-        /// su hueco nuevo.
-        /// </summary>
         public void VolarDesde(Vector3 posicionMundo)
         {
             desplazamiento = Raiz.InverseTransformPoint(posicionMundo);
@@ -346,17 +337,12 @@ namespace RiftDeck.UI
             Capa(OrdenArrastre);
         }
 
-        /// <summary>Escondida hasta que la mano la reparta (si no, se ve un cuadro en su hueco).</summary>
         public void Esconder()
         {
             escala = escalaObjetivo = 0;
             visual.localScale = Vector3.zero;
         }
 
-        /// <summary>
-        /// Sale boca abajo y chica desde <paramref name="desde"/> (el mazo), vuela a su hueco y
-        /// se voltea al llegar. Las de una misma mano salen una tras otra.
-        /// </summary>
         public void Repartir(Vector3 desde, float retraso, Sprite reverso)
         {
             StopCoroutine(nameof(Reparto));
@@ -365,7 +351,6 @@ namespace RiftDeck.UI
 
         IEnumerator Reparto(Vector3 desde, float retraso, Sprite reverso)
         {
-            // escondida hasta su turno
             escala = 0;
             escalaObjetivo = 0;
             if (retraso > 0) yield return new WaitForSeconds(retraso);
@@ -383,7 +368,6 @@ namespace RiftDeck.UI
                 dorso.gameObject.SetActive(true);
             }
             yield return new WaitForSeconds(0.12f);
-            // se voltea: se angosta mostrando el dorso y se abre mostrando la cara
             for (float t = 0; t < DuracionVuelta; t += Time.deltaTime)
             {
                 float k = t / DuracionVuelta;
@@ -395,10 +379,6 @@ namespace RiftDeck.UI
             if (conDorso) dorso.gameObject.SetActive(false);
         }
 
-        /// <summary>
-        /// Al ponerla en la zona: viene hacia la cámara (al centro de la pantalla y al doble),
-        /// se queda un instante y baja a su lugar en la zona.
-        /// </summary>
         public void Presentar(Vector3 centro)
         {
             StopCoroutine(nameof(Presentacion));
@@ -412,7 +392,7 @@ namespace RiftDeck.UI
             desplazamientoObjetivo = Raiz.InverseTransformPoint(centro);
             escalaObjetivo = EscalaPresentar;
             yield return new WaitForSeconds(0.32f);
-            if (!presentando) yield break; // la agarraron mientras tanto
+            if (!presentando) yield break;
             presentando = false;
             desplazamientoObjetivo = inspeccionada ? new Vector2(0, SubidaInspeccion) : Vector2.zero;
             escalaObjetivo = inspeccionada ? EscalaInspeccion : 1f;
@@ -426,11 +406,9 @@ namespace RiftDeck.UI
             if ((desplazamiento - desplazamientoObjetivo).sqrMagnitude < 0.25f) desplazamiento = desplazamientoObjetivo;
             if (Mathf.Abs(escala - escalaObjetivo) < 0.01f) escala = escalaObjetivo;
 
-            // se dibuja en píxel entero para que no se vea borroso
             visual.anchoredPosition = new Vector2(Mathf.Round(desplazamiento.x), Mathf.Round(desplazamiento.y));
             visual.localScale = new Vector3(escala * vuelta, escala, 1f);
 
-            // terminó de volar: deja de dibujarse encima
             if (!arrastrando && !inspeccionada && !presentando && desplazamiento == Vector2.zero && escala == 1f && capa.overrideSorting) Capa(0);
         }
 
@@ -454,5 +432,8 @@ namespace RiftDeck.UI
         public void OnBeginDrag(PointerEventData e) { }
         public void OnDrag(PointerEventData e) => Mano?.Arrastrar(this, e);
         public void OnEndDrag(PointerEventData e) { }
+
+        // Se limpia OnPointerClick para que no duplique las llamadas que ya procesa ManoCartas.Soltar
+        public void OnPointerClick(PointerEventData e) { }
     }
 }
