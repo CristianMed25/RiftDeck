@@ -1,146 +1,54 @@
 # RiftDeck
 
-## Estado actual de `CombatSistem`
-
-La rama `CombatSistem` contiene actualmente el ciclo funcional de combate
-integrado con la UI y el flujo local de dos jugadores:
-
-- `CombatEngine` es un servicio C# puro que calcula el daño con
-  `valorBase * multiplicadorResistencia`, redondeado a entero.
-- `ControladorCombate` conecta selección, maná, daño, puntuación, vida del
-  enemigo, descarte, robo, HUD y cambio de turno.
-- Cada turno dispone de **6 puntos de maná**. El costo se muestra en cada carta,
-  se valida al moverla a la zona de juego y se descuenta al pulsar `JUGAR`.
-- `MazoInicializador` mantiene un mazo dinámico y roba hasta completar **5
-  cartas**. Las cartas se reparten desde el mazo con su dorso cosmético.
-- `EnemyPanel` actualiza la vida y reproduce el efecto de ataque según el tipo
-  de daño: fuego, bala, explosión o rayo.
-- El cambio de turno espera la animación completa del golpe. Después de que el
-  jugador receptor pulsa **ESTOY LISTO**, se prepara su mano y comienza el
-  reparto animado.
-- La escena `Combate` tiene asignados `ControladorCombate`, `MazoInicializador`,
-  `EnemyPanel`, `ManaBar`, `ControladorTurnos` y `CartasEspeciales`.
-
-La validación realizada fuera del Editor de Unity cubre estructura C# y
-`git diff --check`. La comprobación final pendiente es ejecutar la escena en
-Unity Play Mode y confirmar las referencias serializadas en el Inspector.
-
-## Sistema de combate
-
-La rama `CombatSistem` incorpora el combate sobre los contratos existentes:
-
-- `RiftDeck.Partida.GestorPartida` mantiene los dos jugadores locales, la ronda y
-  los puntos. `ControladorTurnos` sigue siendo el responsable de cubrir la
-  pantalla, alternar el jugador activo y ejecutar el callback posterior al
-  cambio.
-- La UI existente usa `RiftDeck.UI.CardView` y `ManoCartas`, no `CartaUI`.
-  `ManoCartas.PidioElegir` es el evento de selección. `CardView.BindCarta`
-  conserva el render actual y expone la `CartaSO` seleccionada. `CartaUI` es
-  un adaptador opcional para prefabs nuevos.
-- `ControladorCombate` escucha esa selección, llama a `CombatEngine`, suma el
-  resultado al `GestorPartida`, actualiza `JugadorModel`, mueve la carta a la
-  zona de jugada y solicita el cambio de turno. El evento
-  `puntuacionActualizada` permite conectar el HUD; `uiRefrescada` se ejecuta
-  después de cambiar el turno.
-
-El cálculo no depende de `MonoBehaviour` ni de la UI:
-
-```text
-Puntos = redondeo(valorBase * multiplicadorDeResistencia)
-```
-
-### Prueba rápida en Unity
-
-1. En `Assets/ScriptableObjects/`, crea una carta con
-   **Create > RiftDeck > Combate > Carta**. Configura `id`, `nombreCarta`,
-   `valorBase`, `tipoDano` y su ilustración.
-2. Crea un asset **Create > RiftDeck > Combate > Resistencias**. El arreglo
-   serializado sigue el orden `Cortante`, `Perforante`, `Impacto`,
-   `Elemental`; usa, por ejemplo, `2`, `1` y `0.5` para debilidad, neutral y
-   resistencia.
-3. En la escena Combate, conserva `InicializadorPartida` y
-   `ControladorTurnos` de `feature/game-flow`. Añade `ControladorCombate`,
-   asigna `ManoCartas`, `ControladorTurnos` y el asset de resistencias.
-4. En cada `CardView`, usa `CartaUI` para asignar el `CartaSO` y `TiposDano`,
-   o llama `BindCarta` desde el código que reparte la mano.
-5. Conecta `puntuacionActualizada` al HUD y `uiRefrescada` al método que
-   redibuja la mano/puntuación. Inicia la escena, selecciona una carta y
-   confirma que se muestra el pase de dispositivo, cambia el jugador y se
-   refleja el puntaje en la ronda actual.
-
 Roguelike táctico de cartas para 2 jugadores en el mismo teléfono. Unity **6000.6.7f1**, Android, solo horizontal, pixel art a 640×360 (escala ×3).
 
 Abrir el proyecto con esa versión exacta de Unity. Las escenas están en `Assets/Scenes/` y se juega desde **Menu**.
 
-## Para el integrante 1: lo que hay que saber para hacer el combate real
+## Sistema de combate
 
-Hoy el combate lo mueve **`CombateFalso`** (`Assets/Scripts/UI/CombateFalso.cs` y `CombateFalso.Prismaticos.cs`), con datos de prueba. La idea es que tu sistema lo reemplace y que **las pantallas no cambien**: todo lo visual ya está separado en componentes que solo reciben datos.
+El combate real (no provisional) está integrado de punta a punta con la gestión
+de partida y la interfaz:
 
-### 1. Los datos que entiende la UI
-| Clase | Qué es | Cómo conectarla con lo tuyo |
-|---|---|---|
-| `DatosCarta` (struct) | Nombre, `costo`, `dano`, `tipo` (id del tipo de daño) y si es especial (arcano, hechizo, arma, póker) | Convierte tu `CardData` a esto **en un solo lugar**. La carta se dibuja con `CardView.Bind(datos, tipos)` |
-| `DatosEnemigo` (ScriptableObject, en `Assets/Datos/Enemigos/`) | Nombre, nivel, vida, `resistencias` (tipo + multiplicador), habilidades y animaciones | Igual con tu `EnemyData`. Las resistencias se ven solas: `x2 DÉBIL`, `x1 NORMAL`, `x0.5 RESISTE` |
-| `TiposDano` (`Assets/Datos/TiposDano.asset`) | Lista de tipos: id, nombre, color e ícono | La UI aguanta **N tipos**. Si agregas uno (fuego, hielo...), crea la fila aquí y sale en las cartas, las resistencias y el Perfil |
-| `DatosEstado` (en `Assets/Datos/Estados/`) | Buffs y debuffs del enemigo y de las cartas | Ver la tabla de abajo. Se agregan como assets, sin tocar las pantallas |
-
-### 2. Lo que hay que reemplazar de `CombateFalso`
-- **Fórmula del daño:** `Puntos(DatosCarta)` (hoy: daño × resistencia × 10 × bonos × estados del enemigo) y `DanoJugada(...)` en `CombateFalso.Prismaticos.cs` (combos de hechizos, armas y póker).
-- **Costo:** se paga **`CardView.Costo`** (el de la carta más sus estados), no `DatosCarta.costo`. El número del costo **no** va pintado en el arte: lo dibuja `NumeroPixel` con los sprites de `Art/UI/Cifras/` (salen de `tools/cifras.py`). Si un estado lo sube, se ve en rojo sobre la gema oscura; si lo baja, en menta.
-- **Texto del detalle:** `Describir(CardView)` arma lo que sale al pararse sobre una carta. Lo pide el delegado `ManoCartas.Descripcion`.
-- **Maná:** la integración actual usa 6 puntos por turno, sin reserva. Se
-  muestra con `ManaBar.Mostrar(mana, maxTurno, reserva, costoElegido)`.
-
-### 3. Lo que tu código puede llamar para que se vea
-| Llamada | Qué se ve |
-|---|---|
-| `EnemyPanel.Mostrar(datos, tipos)` / `MostrarVida(actual, max)` | El enemigo, su nivel, sus resistencias y la barra de vida |
-| `EnemyPanel.Impacto(dano, color, donde, efecto)` | Un golpe: sacudida, número que choca "contra el vidrio" y efecto (bala, explosión, fuego, hielo o rayo) |
-| `EnemyPanel.RecibirGolpe(0, color, true)` | El golpe bloqueado ("Bloqueado") |
-| `EnemyPanel.Actuar("ataque" / "bloqueo" / "golpe")`, `Morir()`, `Entrar()` | Las animaciones del enemigo |
-| `EnemyPanel.MostrarEstados(lista, nuevo)` + `Flechas(esBuff)` + `Anunciar(estado)` | La fila de íconos de estado, las flechas que suben o bajan y el nombre del estado subiendo en su color |
-| `EnemyPanel.Curar(cantidad, desde, hasta, max)` | Cruces verdes, "+N" en menta y la barra que se llena |
-| `EnemyPanel.Lanzar(estado)` + `CardView.RecibirEstado(estado, cuadros)` | El enemigo ataca, grita el estado y el efecto cae en cada carta |
-| `ManoCartas.Agregar(carta)`, `CartasEnMano()`, `CartasEnZona()` | Repartir cartas (salen boca abajo del mazo) y leer la jugada |
-| `PlayerHUD.Mostrar(jugador, vida, puntos, activo)` | Vida y puntos de cada jugador |
-
-### 4. Lo que falta definir contigo
-- Los tipos de daño definitivos. El enunciado dice 4 (cortante, perforante, impacto y elemental), y los hechizos ya usan fuego, hielo y rayo como "elementos".
-- Los buffs y debuffs reales. Como referencia sirve **Final Fantasy Brave Exvius**: resistencias por elemento, buffs y debuffs con turnos, "breaks" que bajan las resistencias e imbuir elemento.
-- Todos los números de este README (vida, daño, costos y porcentajes) son **provisionales**.
-- El integrante 3 ya subió `GestorPartida` (turnos, rondas y puntos, en `Assets/Scripts/Partida/`). Hay que acordar quién le pasa los puntos (`SumarPuntos`) y quién avanza la ronda.
-
-## Integración de `CombatSistem`
-
-`CombatEngine` permanece como servicio C# puro y recibe una `CartaSO` y un
-`ResistenciasData`. `CardView.Bind` adapta automáticamente el `DatosCarta` que
-produce la UI actual a una carta de combate, por lo que no es necesario cambiar
-`CombateFalso` ni los prefabs existentes. `ControladorCombate` escucha
-`ManoCartas.PidioElegir`, consume `DatosEnemigo.Multiplicador`, actualiza
-`GestorPartida` y refresca los `PlayerHUD`.
-
-Para activar el combate real en la escena `Combate`, añade `ControladorCombate`
-al mismo objeto que gestiona la escena y asigna `ManoCartas`,
-`ControladorTurnos`, los dos `PlayerHUD` y el `DatosEnemigo` actual. Si no se
-asigna un `DatosEnemigo`, usa el asset `ResistenciasData` configurado en el
-Inspector. Desactiva o elimina `CombateFalso` para evitar que ambos
-controladores respondan al mismo evento. Conecta `uiRefrescada` a la rutina que
-reparte la siguiente mano.
+- `CombatEngine` (`Assets/Scripts/Combate/`) es un servicio C# puro, sin Unity
+  ni UI: calcula `Puntos = redondeo(valorBase * multiplicadorDeResistencia)` a
+  partir de una `CartaSO` y un `ResistenciasData`.
+- `ControladorCombate` conecta la selección de cartas, el maná, el daño, la
+  puntuación, la vida del enemigo, el descarte, el robo y el HUD. Cada turno
+  hay **6 puntos de maná**; el costo se valida al mover la carta a la zona de
+  juego y se descuenta al pulsar **JUGAR**.
+- `RiftDeck.Partida.GestorPartida` mantiene los dos jugadores locales, la
+  ronda y los puntos, independiente de la UI y del combate.
+  `ControladorTurnos` tapa la pantalla con `PasaDispositivo`, alterna el
+  jugador activo y ejecuta el callback que reparte la siguiente mano.
+  `ControladorFinPartida` guarda el resultado en `ResultadoPartida` y carga
+  `Resultados` cuando la partida termina (4 rondas en Duelo, 1 en Partida
+  rápida — lo decide `ModoPartida.Rondas`, elegido en la pantalla `Modo`).
+- La UI sigue usando `RiftDeck.UI.CardView` y `ManoCartas`.
+  `CardView.BindCarta` conecta la `CartaSO` real con el mismo render visual
+  que ya existía.
+- `MazoInicializador` mantiene un mazo dinámico con las cartas de
+  `Assets/Datos/Cartas/` y reparte una mano de **5 cartas**, con el dorso
+  cosmético equipado en la Tienda.
+- `EnemyPanel` actualiza la vida del enemigo y reproduce el efecto de ataque
+  según el tipo de daño de la carta jugada (fuego, bala, explosión o rayo).
+- Cada carta jugada llama `Estadisticas.SumarDano`, así que la pantalla
+  Perfil refleja el daño real hecho por tipo, no solo partidas/victorias.
 
 ### Assets de prueba del combate
 
-Las cinco cartas de arranque están en `Assets/Datos/Cartas/` y referencian
-sprites reales de `Assets/Art/Terceros/Cartas/Hechizos/` mediante referencias
-serializadas de Unity. El enemigo inicial es `Assets/Datos/Enemigos/Caballero.asset`;
-sus cuadros de animación están referenciados desde `Assets/Art/Terceros/Enemigos/`.
-No se usan rutas `Resources.Load` ni cadenas `Assets/...` en tiempo de ejecución.
+Las cartas iniciales están en `Assets/Datos/Cartas/` (13 en total, repartidas
+entre los cuatro tipos de daño) y referencian sprites reales de
+`Assets/Art/Terceros/Cartas/Hechizos/` mediante referencias serializadas de
+Unity. El enemigo inicial por defecto es `Assets/Datos/Enemigos/Caballero.asset`
+(la pantalla `Lobby` puede elegir otro según la semilla compartida); sus
+cuadros de animación están en `Assets/Art/Terceros/Enemigos/`. No se usan
+rutas `Resources.Load` ni cadenas `Assets/...` en tiempo de ejecución.
 
-`MazoInicializador` prepara un mazo dinámico y reparte esas cinco cartas cuando
-la mano está vacía o cuando recibe el dispositivo el siguiente jugador.
-`ControladorCombate` inicializa `EnemyPanel` con el `DatosEnemigo` asignado y
-espera la confirmación de **ESTOY LISTO** antes de robar.
-Para sustituirlos, cambia las referencias en Inspector; no muevas sprites a
-`Assets/Art/Cartas` o `Assets/Art/Enemigos`.
+Para agregar más cartas: **Create > RiftDeck > Combate > Carta**, configura
+`nombreCarta`, `costo`, `valorBase`, `tipoDano` y `spriteIlustracion`, y
+agrégala a `cartasIniciales`/`catalogoCartas` en el `MazoInicializador` de la
+escena `Combate`. Los números de cartas, enemigos y aumentos siguen siendo
+orientativos, pensados para que el prototipo se pueda demostrar.
 
 ## Efectos de estado (buffs y debuffs)
 
@@ -187,7 +95,7 @@ Son blancas con contorno de Tinta y el color lo pone el código, así que no hac
 | `Creditos` | Equipo, arte de terceros con su autor, fuentes y universidad |
 | `Resultados` | Ganador, puntos por ronda, oro ganado, REVANCHA y MENÚ |
 
-"Pasa el dispositivo" no es una escena: es una pantalla que tapa el `Combate` entre turnos. La lógica de turnos y de fin de partida es del integrante 3. Aquí solo están las pantallas con nuestro estilo, conectadas a `CombateFalso` mientras tanto.
+"Pasa el dispositivo" no es una escena: es una pantalla que tapa el `Combate` entre turnos. La lógica de turnos y de fin de partida es del integrante 3 (`GestorPartida`, `ControladorTurnos`, `ControladorFinPartida`), ya conectada al combate real del integrante 1.
 
 ### Splash y menú
 ![Splash](Docs/capturas/splash.png)
@@ -308,7 +216,7 @@ Todo se guarda en el teléfono (`Ajustes`, con PlayerPrefs). Los nombres de los 
 ![Créditos](Docs/capturas/creditos.png)
 
 ## Notas para el equipo
-- Los valores de cartas, enemigos, aumentos y precios son **provisionales** (`CombateFalso` usa datos de prueba) hasta que el integrante 1 defina el combate.
+- Los valores de cartas, enemigos, aumentos y precios siguen siendo **orientativos**: alcanzan para demostrar el prototipo, pero no están balanceados a fondo.
 - El oro se guarda en el teléfono (`Inventario`). Resultados ya suma el de cada partida con `ResultadoPartida.CobrarOro()`.
-- **Para el integrante 3:** al terminar la partida, llama a `ResultadoPartida.Guardar(puntosJ1PorRonda, puntosJ2PorRonda)` y carga la escena `Resultados`. Para cambiar de turno, usa `PasaDispositivo.Mostrar(...)`: tapa la pantalla, corre tu cambio de mano ya tapada y espera a ESTOY LISTO. Mira cómo lo hace `CombateFalso.CambioDeTurno`.
-- El arte de terceros está en `Assets/Art/Terceros/`. Varios packs no permiten redistribuir los archivos sueltos, así que **Claude sugiere hacer privado el repositorio** para no arriesgarnos a un reclamo por copyright.
+- La gestión de partida (turnos, rondas, fin de partida y revancha) vive en `Assets/Scripts/Partida/` (`GestorPartida`, `ControladorTurnos`, `ControladorFinPartida`, `InicializadorPartida`), ya integrada con el combate real en `Assets/Scripts/Combate/`.
+- El arte de terceros está en `Assets/Art/Terceros/`. Varios packs no permiten redistribuir los archivos sueltos, así que conviene mantener el repositorio privado para no arriesgarnos a un reclamo por copyright.
