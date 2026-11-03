@@ -17182,7 +17182,7 @@ MonoBehaviour:
   botonSaltarTurno: {fileID: 715767787}
   textoAviso: {fileID: 1251098603}
   textoRonda: {fileID: 520380403}
-  controladorFinPartida: {fileID: 0}
+  controladorFinPartida: {fileID: 255994545}
   duracionAviso: 2
   vidaJugador1: 3
   vidaJugador2: 3
