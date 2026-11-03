@@ -6,7 +6,7 @@ namespace RiftDeck.UI
 
     /// <summary>
     /// Aumento al estilo de TFT: una mejora que se elige entre tres y dura toda la
-    /// partida. Lo que hace lo decide quien lee <see cref="id"/> (por ahora CombateFalso).
+    /// partida. Lo que hace lo decide quien lee <see cref="id"/>.
     /// </summary>
     [CreateAssetMenu(menuName = "RiftDeck/Aumento", fileName = "Aumento")]
     public class DatosAumento : ScriptableObject
