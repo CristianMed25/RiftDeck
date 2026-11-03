@@ -42,7 +42,6 @@ namespace RiftDeck.Combate
         [SerializeField] UnityEvent<int> puntuacionActualizada;
         [SerializeField] UnityEvent uiRefrescada;
 
-        readonly JugadorModel[] jugadores = { new JugadorModel(1), new JugadorModel(2) };
         readonly int[] manaActual = new int[2];
         readonly CombatEngine motor = new CombatEngine();
         Coroutine avisoEnCurso;
@@ -184,18 +183,20 @@ namespace RiftDeck.Combate
                     if (resistencias == null)
                         throw new InvalidOperationException("Falta asignar las resistencias del objetivo.");
 
+                    int puntosCarta;
                     try
                     {
-                        puntosTotales += motor.CalcularPuntos(carta.Carta, resistencias);
+                        puntosCarta = motor.CalcularPuntos(carta.Carta, resistencias);
                     }
                     finally
                     {
                         if (enemigoObjetivo != null)
                             Destroy(resistencias);
                     }
+                    Estadisticas.SumarDano(jugador, carta.Carta.tipoDano.ToString().ToLowerInvariant(), puntosCarta);
+                    puntosTotales += puntosCarta;
                 }
 
-                jugadores[jugador - 1].AgregarPuntos(puntosTotales);
                 partida.SumarPuntos(jugador, puntosTotales);
                 manaActual[jugador - 1] -= costoTotal;
                 vidaEnemigoActual = Mathf.Max(0, vidaEnemigoActual - puntosTotales);
